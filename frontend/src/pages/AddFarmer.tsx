@@ -1,12 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { 
   User, 
-  Phone, 
-  CreditCard,
-  Plus,
-  Trash2,
-  CheckCircle,
-  AlertCircle,
   Check,
   CheckCircle2,
   ChevronRight,

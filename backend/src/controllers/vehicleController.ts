@@ -14,7 +14,7 @@ export const getVehicles = async (req: Request, res: Response) => {
 
 export const getVehicle = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const vehicle = await prisma.vehicle.findUnique({
       where: { id: parseInt(id) }
     });
@@ -38,7 +38,7 @@ export const createVehicle = async (req: Request, res: Response) => {
 
 export const updateVehicle = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const vehicle = await prisma.vehicle.update({
       where: { id: parseInt(id) },
       data: req.body
@@ -51,7 +51,7 @@ export const updateVehicle = async (req: Request, res: Response) => {
 
 export const deleteVehicle = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     await prisma.vehicle.delete({
       where: { id: parseInt(id) }
     });

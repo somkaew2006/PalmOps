@@ -3,8 +3,6 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { 
   Truck, 
   User, 
-  Phone, 
-  Weight, 
   CheckCircle, 
   ChevronLeft,
   Save,

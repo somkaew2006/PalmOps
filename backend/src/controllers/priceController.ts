@@ -80,7 +80,7 @@ export const createPrice = async (req: Request, res: Response) => {
 
 export const updatePrice = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const { priceGradeA, priceGradeB, priceGradeC, referenceSource, note } = req.body;
 
     const price = await prisma.dailyPrice.update({
@@ -102,7 +102,7 @@ export const updatePrice = async (req: Request, res: Response) => {
 
 export const deletePrice = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     await prisma.dailyPrice.delete({
       where: { id: parseInt(id) }
     });

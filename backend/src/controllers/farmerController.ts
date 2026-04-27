@@ -21,7 +21,7 @@ export const getFarmers = async (req: Request, res: Response) => {
 
 export const getFarmer = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const farmer = await prisma.farmer.findUnique({
       where: { id: parseInt(id) },
       include: { farmPlots: true }
@@ -93,7 +93,7 @@ export const createFarmer = async (req: Request, res: Response) => {
 export const updateFarmer = async (req: Request, res: Response) => {
   console.log('--- ATTEMPTING TO UPDATE FARMER (REFACTORED) ---');
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const fId = parseInt(id);
     const { fullName, nationalId, phone, address, province, district, subdistrict, isActive, bankName, bankAccount, bankBranch, lineId, note, farmPlots } = req.body;
 
@@ -153,7 +153,7 @@ export const updateFarmer = async (req: Request, res: Response) => {
 
 export const deleteFarmer = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     await prisma.farmer.delete({ where: { id: parseInt(id) } });
     res.json({ message: 'Farmer deleted successfully' });
   } catch (error: any) {

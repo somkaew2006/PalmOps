@@ -26,6 +26,9 @@ model Farmer {
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
+  farmPlots   FarmPlot[]
+  weighTickets WeighTicket[]
+
   @@map("farmers")
 }
 
@@ -45,6 +48,9 @@ model FarmPlot {
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt    DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
+  farmer       Farmer   @relation(fields: [farmerId], references: [id])
+  weighTickets WeighTicket[]
+
   @@index([farmerId], map: "idx_farm_plots_farmer_id")
   @@map("farm_plots")
 }
@@ -63,6 +69,8 @@ model Vehicle {
   createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt       DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
+  weighTickets    WeighTicket[]
+
   @@map("vehicles")
 }
 
@@ -78,6 +86,8 @@ model DailyPrice {
   note            String?
   createdBy       String?  @map("created_by") @db.VarChar(60)
   createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  weighTickets    WeighTicket[]
 
   @@index([priceDate(sort: Desc)], map: "idx_daily_prices_date")
   @@map("daily_prices")
@@ -110,6 +120,11 @@ model WeighTicket {
   createdBy       String?      @map("created_by") @db.VarChar(60)
   createdAt       DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt       DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  farmer          Farmer       @relation(fields: [farmerId], references: [id])
+  vehicle         Vehicle?     @relation(fields: [vehicleId], references: [id])
+  price           DailyPrice   @relation(fields: [priceId], references: [id])
+  farmPlot        FarmPlot?    @relation(fields: [farmPlotId], references: [id])
 
   @@index([farmerId], map: "idx_tickets_farmer_id")
   @@index([grade], map: "idx_tickets_grade")

@@ -19,7 +19,7 @@ export const getTickets = async (req: Request, res: Response) => {
 
 export const getTicket = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const ticket = await prisma.weighTicket.findUnique({
       where: { id: parseInt(id) },
       include: {
@@ -84,7 +84,7 @@ export const createTicket = async (req: Request, res: Response) => {
 
 export const updateTicket = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const data = { ...req.body };
     
     // Convert numeric strings to numbers if present
@@ -115,7 +115,7 @@ export const updateTicket = async (req: Request, res: Response) => {
 
 export const deleteTicket = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     await prisma.weighTicket.delete({
       where: { id: parseInt(id) }
     });

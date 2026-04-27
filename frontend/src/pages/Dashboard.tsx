@@ -1,11 +1,5 @@
 import { useEffect, useState } from 'react';
 import api from '../api/axios';
-import { 
-  LayoutDashboard, 
-  TrendingUp, 
-  Activity, 
-  CreditCard 
-} from 'lucide-react';
 
 const Dashboard = () => {
   const [stats, setStats] = useState<any>(null);

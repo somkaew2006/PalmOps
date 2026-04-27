@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  # Database Service (Postgres)
+  db:
+    image: postgres:15-alpine
+    container_name: palmops-db
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER:-palm_admin}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-palm_pass}
+      POSTGRES_DB: ${DB_NAME:-palm_ops_db}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # Backend Service (Node.js/Prisma/Express)
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: palmops-backend
+    restart: always
+    ports:
+      - "5000:5000"
+    environment:
+      - DATABASE_URL=postgresql://${DB_USER:-palm_admin}:${DB_PASSWORD:-palm_pass}@db:5432/${DB_NAME:-palm_ops_db}?schema=public
+      - JWT_SECRET=${JWT_SECRET:-palmops_secret_key_2026}
+      - PORT=5000
+    depends_on:
+      - db
+
+  # Frontend Service (React/Vite/Nginx)
+  frontend:
+    build: 
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: palmops-frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
