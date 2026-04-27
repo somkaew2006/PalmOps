@@ -1,0 +1,126 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-brand-green: #10b981;
+  --color-brand-light: #34d399;
+  --color-brand-forest: #234b3b;
+  --color-brand-pale: #064e3b;
+  --color-brand-amber: #f59e0b;
+  
+  --color-bg-main: #1c1c1c;
+  --color-bg-card: #2b2b2b;
+  --color-sidebar: #234b3b;
+  --color-border-dark: #3a3a3a;
+  
+  --font-sans: 'Inter', sans-serif;
+  --font-heading: 'Outfit', sans-serif;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-bg-main);
+  color: #e5e5e5;
+  @apply antialiased;
+}
+
+h1, h2, h3, h4, h5, h6, .font-heading {
+  font-family: var(--font-heading);
+}
+
+/* Premium Badges */
+.badge {
+  @apply inline-flex items-center justify-center px-3 py-1 rounded-full text-[11px] font-semibold tracking-wide;
+}
+.badge-circle {
+  @apply inline-flex items-center justify-center w-6 h-6 rounded-full text-[11px] font-bold;
+}
+.badge-green {
+  @apply bg-brand-green/10 text-brand-light border border-brand-green/20;
+}
+.badge-amber {
+  @apply bg-brand-amber/10 text-brand-amber border border-brand-amber/20;
+}
+.badge-gray {
+  @apply bg-neutral-800 text-neutral-400 border border-neutral-700;
+}
+
+/* Dark Theme Tables matching screenshot */
+.table-wrap {
+  @apply bg-[var(--color-bg-card)] border border-[var(--color-border-dark)] rounded-3xl overflow-hidden shadow-2xl;
+}
+
+table {
+  @apply w-full border-collapse text-left;
+}
+
+thead tr {
+  @apply bg-black/10 border-b border-[var(--color-border-dark)];
+}
+
+th {
+  @apply px-6 py-4 text-[10px] font-black text-neutral-500 uppercase tracking-widest;
+}
+
+td {
+  @apply px-6 py-5 border-b border-[var(--color-border-dark)] text-neutral-300 transition-colors;
+}
+
+tr:last-child td {
+  @apply border-b-0;
+}
+
+tr:hover td {
+  @apply bg-white/[0.02];
+}
+
+/* Premium Buttons */
+.btn {
+  @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl text-[14px] font-bold transition-all duration-300 cursor-pointer focus:outline-none font-heading disabled:opacity-50 disabled:cursor-not-allowed active:scale-95;
+}
+
+.btn-primary {
+  @apply bg-brand-light text-[#064e3b] shadow-lg shadow-brand-green/20 hover:bg-white hover:text-brand-green hover:shadow-brand-green/40 hover:-translate-y-0.5;
+}
+
+.btn-outline {
+  @apply bg-transparent border border-neutral-700 text-neutral-400 hover:bg-neutral-800 hover:text-white hover:border-neutral-500;
+}
+
+/* Dark Theme Cards */
+.stat-card {
+  @apply bg-[var(--color-bg-main)] border border-[var(--color-border-dark)] rounded-xl p-5 hover:border-neutral-600 transition-all hover:shadow-[0_4px_20px_rgba(0,0,0,0.3)] duration-300;
+}
+
+.form-card {
+  @apply bg-[var(--color-bg-card)] border border-[var(--color-border-dark)] rounded-xl p-5;
+}
+
+.form-card-title {
+  @apply flex items-center text-sm font-semibold text-brand-light mb-4 pb-3 border-b border-[var(--color-border-dark)];
+}
+
+/* Dark Form Inputs */
+.form-group label {
+  @apply block text-xs font-medium text-neutral-400 mb-1.5;
+}
+
+.form-group input, .form-group select {
+  @apply w-full px-3.5 py-2.5 border border-[var(--color-border-dark)] rounded-lg text-sm bg-[var(--color-bg-main)] text-neutral-200 transition-all focus:outline-none focus:border-brand-light focus:ring-1 focus:ring-brand-light shadow-inner;
+}
+
+/* Custom Scrollbar for Dark Mode */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-bg-main);
+}
+::-webkit-scrollbar-thumb {
+  background: #404040;
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #525252;
+}
