@@ -22,7 +22,7 @@ export const getBranch = async (req: Request, res: Response) => {
   try {
     const id = req.params.id;
     const branch = await prisma.branch.findUnique({
-      where: { id: parseInt(id) },
+      where: { id: parseInt(id as string) },
       include: { stocks: true }
     });
     if (!branch) return res.status(404).json({ message: 'Branch not found' });
@@ -70,7 +70,7 @@ export const updateBranch = async (req: Request, res: Response) => {
     console.log('Body:', req.body);
 
     const branch = await prisma.branch.update({
-      where: { id: parseInt(id) },
+      where: { id: parseInt(id as string) },
       data: {
         branchCode,
         branchName,
@@ -91,7 +91,7 @@ export const updateBranch = async (req: Request, res: Response) => {
 export const deleteBranch = async (req: Request, res: Response) => {
   try {
     const id = req.params.id;
-    await prisma.branch.delete({ where: { id: parseInt(id) } });
+    await prisma.branch.delete({ where: { id: parseInt(id as string) } });
     res.json({ message: 'Branch deleted successfully' });
   } catch (error: any) {
     res.status(500).json({ message: error.message });
@@ -101,7 +101,7 @@ export const deleteBranch = async (req: Request, res: Response) => {
 export const getStocks = async (req: Request, res: Response) => {
   try {
     const branchId = req.query.branchId as string;
-    const where = branchId ? { branchId: parseInt(branchId) } : {};
+    const where = branchId ? { branchId: parseInt(branchId as string) } : {};
     const stocks = await prisma.stock.findMany({
       where,
       include: { branch: true }
