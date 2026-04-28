@@ -10,7 +10,8 @@ import {
   HelpCircle as Info,
   BadgePercent,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  Building
 } from 'lucide-react';
 
 interface Farmer {
@@ -24,6 +25,11 @@ interface Vehicle {
   licensePlate: string;
 }
 
+interface Branch {
+  id: number;
+  branchName: string;
+}
+
 interface Price {
   id: number;
   priceGradeA: number;
@@ -34,12 +40,15 @@ interface Price {
 const Weigh = () => {
   const [farmers, setFarmers] = useState<Farmer[]>([]);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [branches, setBranches] = useState<Branch[]>([]);
   const [todayPrice, setTodayPrice] = useState<Price | null>(null);
 
   const [farmerId, setFarmerId] = useState<string>('');
   const [vehicleId, setVehicleId] = useState<string>('');
+  const [branchId, setBranchId] = useState<string>('');
   const [gross, setGross] = useState<number>(0);
   const [tare, setTare] = useState<number>(0);
+  const [note, setNote] = useState<string>('');
   const [ffa, setFfa] = useState<number>(0);
   const [oil, setOil] = useState<number>(0);
   const [deduction, setDeduction] = useState<number>(0);
@@ -48,20 +57,38 @@ const Weigh = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [fRes, vRes, pRes] = await Promise.all([
+        const [fRes, vRes, bRes] = await Promise.all([
           api.get('/farmers'),
           api.get('/vehicles'),
-          api.get('/prices/today')
+          api.get('/branches')
         ]);
         setFarmers(fRes.data);
         setVehicles(vRes.data);
-        setTodayPrice(pRes.data);
+        setBranches(bRes.data);
+        
+        // Auto-select first branch if available
+        if (bRes.data.length > 0 && !branchId) {
+          setBranchId(bRes.data[0].id.toString());
+        }
       } catch (error) {
         console.error('Error fetching data:', error);
       }
     };
     fetchData();
   }, []);
+
+  useEffect(() => {
+    const fetchBranchPrice = async () => {
+      if (!branchId) return;
+      try {
+        const res = await api.get(`/prices/today?branchId=${branchId}`);
+        setTodayPrice(res.data);
+      } catch (error) {
+        console.error('Error fetching branch price:', error);
+      }
+    };
+    fetchBranchPrice();
+  }, [branchId]);
 
   // Auto-calculate grade based on FFA
   useEffect(() => {
@@ -85,8 +112,8 @@ const Weigh = () => {
 
   const handleSubmit = async () => {
     try {
-      if (!farmerId || !todayPrice) {
-        alert('กรุณาเลือกเกษตรกรและตรวจสอบราคา');
+      if (!farmerId || !todayPrice || !branchId) {
+        alert('กรุณาเลือกสาขา เกษตรกร และตรวจสอบราคา');
         return;
       }
 
@@ -104,7 +131,9 @@ const Weigh = () => {
         finalWeightKg: finalWeight,
         pricePerKg: currentPrice,
         totalAmount: total,
-        status: 'confirmed'
+        status: 'confirmed',
+        branchId: parseInt(branchId),
+        note: note
       };
 
       await api.post('/weigh', payload);
@@ -199,12 +228,41 @@ const Weigh = () => {
               </div>
               <div className="space-y-2">
                 <label className="text-xs font-medium text-neutral-500 uppercase tracking-wider flex items-center gap-1.5">
+                  <Building className="w-3 h-3" /> สาขา
+                </label>
+                <select 
+                  className="w-full bg-[#141414] border border-brand-light/30 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-brand-light transition-all cursor-pointer"
+                  value={branchId} 
+                  onChange={e => setBranchId(e.target.value)}
+                  required
+                >
+                  <option value="">เลือกสาขา...</option>
+                  {branches.map(b => (
+                    <option key={b.id} value={b.id}>{b.branchName}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-neutral-500 uppercase tracking-wider flex items-center gap-1.5">
                   ราคาฐาน (เกรด A)
                 </label>
                 <div className="bg-brand-light/5 border border-brand-light/20 text-brand-light rounded-xl px-4 py-3 font-bold text-lg">
                   {todayPrice ? `${Number(todayPrice.priceGradeA).toFixed(2)} ฿/กก.` : '...'}
                 </div>
               </div>
+            </div>
+            
+            <div className="mt-6 space-y-2">
+              <label className="text-xs font-medium text-neutral-500 uppercase tracking-wider flex items-center gap-1.5">
+                หมายเหตุ
+              </label>
+              <textarea 
+                rows={2}
+                className="w-full bg-[#141414] border border-neutral-800 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-brand-light transition-all resize-none"
+                value={note}
+                onChange={e => setNote(e.target.value)}
+                placeholder="ระบุรายละเอียดเพิ่มเติม..."
+              ></textarea>
             </div>
           </div>
 

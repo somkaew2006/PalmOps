@@ -8,6 +8,9 @@ interface Ticket {
   farmer: {
     fullName: string;
   };
+  branch?: {
+    branchName: string;
+  };
   finalWeightKg: number;
   grade: string;
   totalAmount: number;
@@ -68,7 +71,12 @@ const Payment = () => {
               <DollarSign className="w-6 h-6" />
             </div>
             <div className="flex-1">
-              <div className="font-bold text-white text-[15px] group-hover:text-brand-light transition-colors">{ticket.farmer?.fullName}</div>
+              <div className="font-bold text-white text-[15px] group-hover:text-brand-light transition-colors">
+                {ticket.farmer?.fullName}
+                <span className="ml-2 text-[10px] font-black bg-brand-green/10 text-brand-green px-2 py-0.5 rounded-full border border-brand-green/10 uppercase tracking-tighter">
+                  {ticket.branch?.branchName || 'ไม่ระบุสาขา'}
+                </span>
+              </div>
               <div className="text-[11px] text-neutral-500 mt-0.5">
                 ใบชั่ง <span className="font-mono text-brand-light">{ticket.ticketNo}</span> • {Number(ticket.finalWeightKg).toLocaleString()} กก. เกรด {ticket.grade}
               </div>

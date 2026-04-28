@@ -85,11 +85,14 @@ model DailyPrice {
   referenceSource String?  @default("MPOB") @map("reference_source") @db.VarChar(60)
   note            String?
   createdBy       String?  @map("created_by") @db.VarChar(60)
-  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  branchId        Int      @map("branch_id")
+  branch          Branch   @relation(fields: [branchId], references: [id])
 
   weighTickets    WeighTicket[]
 
+  @@unique([priceDate, branchId])
   @@index([priceDate(sort: Desc)], map: "idx_daily_prices_date")
+  @@index([branchId], map: "idx_daily_prices_branch_id")
   @@map("daily_prices")
 }
 
@@ -104,33 +107,36 @@ model WeighTicket {
   weighOutAt      DateTime?    @map("weigh_out_at") @db.Timestamptz(6)
   grossWeightKg   Decimal      @map("gross_weight_kg") @db.Decimal(10, 2)
   tareWeightKg    Decimal      @map("tare_weight_kg") @db.Decimal(10, 2)
-  netWeightKg     Decimal?     @default(dbgenerated("(gross_weight_kg - tare_weight_kg)")) @map("net_weight_kg") @db.Decimal(10, 2)
+  netWeightKg     Decimal?     @map("net_weight_kg") @db.Decimal(10, 2)
   ffaPercent      Decimal?     @map("ffa_percent") @db.Decimal(5, 2)
   oilPercent      Decimal?     @map("oil_percent") @db.Decimal(5, 2)
   moisturePercent Decimal?     @map("moisture_percent") @db.Decimal(5, 2)
   grade           PalmGrade    @default(A)
   deductionKg     Decimal      @default(0) @map("deduction_kg") @db.Decimal(10, 2)
   deductionNote   String?      @map("deduction_note") @db.VarChar(200)
-  finalWeightKg   Decimal?     @default(dbgenerated("((gross_weight_kg - tare_weight_kg) - deduction_kg)")) @map("final_weight_kg") @db.Decimal(10, 2)
+  finalWeightKg   Decimal?     @map("final_weight_kg") @db.Decimal(10, 2)
   pricePerKg      Decimal      @map("price_per_kg") @db.Decimal(8, 2)
-  totalAmount     Decimal?     @default(dbgenerated("(((gross_weight_kg - tare_weight_kg) - deduction_kg) * price_per_kg)")) @map("total_amount") @db.Decimal(12, 2)
+  totalAmount     Decimal?     @map("total_amount") @db.Decimal(12, 2)
   status          TicketStatus @default(draft)
   photoUrls       String[]     @map("photo_urls")
   note            String?
   createdBy       String?      @map("created_by") @db.VarChar(60)
   createdAt       DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt       DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  branchId        Int          @map("branch_id")
 
   farmer          Farmer       @relation(fields: [farmerId], references: [id])
   vehicle         Vehicle?     @relation(fields: [vehicleId], references: [id])
   price           DailyPrice   @relation(fields: [priceId], references: [id])
   farmPlot        FarmPlot?    @relation(fields: [farmPlotId], references: [id])
+  branch          Branch       @relation(fields: [branchId], references: [id])
 
   @@index([farmerId], map: "idx_tickets_farmer_id")
   @@index([grade], map: "idx_tickets_grade")
   @@index([priceId], map: "idx_tickets_price_id")
   @@index([status], map: "idx_tickets_status")
   @@index([vehicleId], map: "idx_tickets_vehicle_id")
+  @@index([branchId], map: "idx_tickets_branch_id")
   @@index([weighInAt(sort: Desc)], map: "idx_tickets_weigh_in_at")
   @@map("weigh_tickets")
 }
@@ -148,10 +154,14 @@ model Payment {
   createdBy   String?       @map("created_by") @db.VarChar(60)
   createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt   DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  branchId    Int           @map("branch_id")
+
+  branch      Branch        @relation(fields: [branchId], references: [id])
 
   @@index([paymentDate(sort: Desc)], map: "idx_payments_date")
   @@index([farmerId], map: "idx_payments_farmer_id")
   @@index([status], map: "idx_payments_status")
+  @@index([branchId], map: "idx_payments_branch_id")
   @@map("payments")
 }
 
@@ -177,9 +187,13 @@ model Deduction {
   settledPaymentId Int?          @map("settled_payment_id")
   createdBy        String?       @map("created_by") @db.VarChar(60)
   createdAt        DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  branchId         Int           @map("branch_id")
+
+  branch           Branch        @relation(fields: [branchId], references: [id])
 
   @@index([farmerId], map: "idx_deductions_farmer_id")
   @@index([isSettled], map: "idx_deductions_settled")
+  @@index([branchId], map: "idx_deductions_branch_id")
   @@map("deductions")
 }
 
@@ -194,8 +208,67 @@ model User {
   lastLoginAt  DateTime? @map("last_login_at") @db.Timestamptz(6)
   createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt    DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  branchId     Int?      @map("branch_id")
+
+  branch       Branch?   @relation(fields: [branchId], references: [id])
 
   @@map("users")
+}
+
+model Branch {
+  id          Int      @id @default(autoincrement())
+  branchCode  String   @unique @map("branch_code") @db.VarChar(20)
+  branchName  String   @map("branch_name") @db.VarChar(100)
+  address     String?
+  phone       String?  @db.VarChar(20)
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  weighTickets WeighTicket[]
+  users        User[]
+  stocks       Stock[]
+  payments     Payment[]
+  deductions   Deduction[]
+  sales        Sale[]
+  prices       DailyPrice[]
+
+  @@map("branches")
+}
+
+model Stock {
+  id          Int       @id @default(autoincrement())
+  branchId    Int       @map("branch_id")
+  grade       PalmGrade
+  quantityKg  Decimal   @default(0) @map("quantity_kg") @db.Decimal(12, 2)
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  branch      Branch    @relation(fields: [branchId], references: [id])
+
+  @@unique([branchId, grade])
+  @@map("stocks")
+}
+
+model Sale {
+  id              Int          @id @default(autoincrement())
+  saleNo          String       @unique @map("sale_no") @db.VarChar(20)
+  branchId        Int          @map("branch_id")
+  customerName    String?      @map("customer_name") @db.VarChar(100)
+  saleDate        DateTime     @default(now()) @map("sale_date") @db.Timestamptz(6)
+  grade           PalmGrade
+  quantityKg      Decimal      @map("quantity_kg") @db.Decimal(12, 2)
+  pricePerKg      Decimal      @map("price_per_kg") @db.Decimal(8, 2)
+  totalAmount     Decimal?     @map("total_amount") @db.Decimal(12, 2)
+  note            String?
+  status          SaleStatus   @default(completed)
+  createdAt       DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  branch          Branch       @relation(fields: [branchId], references: [id])
+
+  @@index([branchId], map: "idx_sales_branch_id")
+  @@index([saleDate], map: "idx_sales_date")
+  @@map("sales")
 }
 
 enum PalmGrade {
@@ -247,4 +320,11 @@ enum UserRole {
   viewer
 
   @@map("user_role")
+}
+
+enum SaleStatus {
+  completed
+  cancelled
+
+  @@map("sale_status")
 }

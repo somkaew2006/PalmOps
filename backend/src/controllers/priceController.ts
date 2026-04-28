@@ -4,6 +4,7 @@ import prisma from '../config/prisma';
 export const getPrices = async (req: Request, res: Response) => {
   try {
     const prices = await prisma.dailyPrice.findMany({
+      include: { branch: true },
       orderBy: { priceDate: 'desc' }
     });
     res.json(prices);
@@ -14,22 +15,24 @@ export const getPrices = async (req: Request, res: Response) => {
 
 export const getTodayPrice = async (req: Request, res: Response) => {
   try {
+    const branchId = req.query.branchId ? parseInt(req.query.branchId as string) : null;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
     const price = await prisma.dailyPrice.findFirst({
       where: {
-        priceDate: {
-          equals: today
-        }
+        priceDate: { equals: today },
+        branchId: branchId || undefined
       }
     });
 
     if (!price) {
-      // Return the most recent price if today's is not set
+      // Return the most recent price for this branch
       const latestPrice = await prisma.dailyPrice.findFirst({
+        where: { branchId: branchId || undefined },
         orderBy: { priceDate: 'desc' }
       });
+      
       return res.json(latestPrice || { 
         priceGradeA: 0, 
         priceGradeB: 0, 
@@ -47,34 +50,41 @@ export const getTodayPrice = async (req: Request, res: Response) => {
 
 export const createPrice = async (req: Request, res: Response) => {
   try {
-    const { priceDate, priceGradeA, priceGradeB, priceGradeC, referenceSource, note } = req.body;
+    const { branchId, priceDate, priceGradeA, priceGradeB, priceGradeC, referenceSource, note } = req.body;
     
-    // Check if price for this date already exists
+    if (!branchId) return res.status(400).json({ message: 'กรุณาระบุสาขา' });
+
     const date = new Date(priceDate);
     date.setHours(0, 0, 0, 0);
 
     const existing = await prisma.dailyPrice.findUnique({
-      where: { priceDate: date }
+      where: { 
+        priceDate_branchId: {
+          priceDate: date,
+          branchId: parseInt(branchId)
+        }
+      }
     });
 
     if (existing) {
-      return res.status(400).json({ message: 'ราคาวันนี้มีอยู่แล้ว กรุณาใช้การแก้ไขแทน' });
+      return res.status(400).json({ message: 'ราคาวันนี้ของสาขานี้มีอยู่แล้ว กรุณาใช้การแก้ไขแทน' });
     }
 
     const price = await prisma.dailyPrice.create({
       data: {
+        branchId: parseInt(branchId),
         priceDate: date,
-        priceGradeA,
-        priceGradeB,
-        priceGradeC,
+        priceGradeA: parseFloat(priceGradeA),
+        priceGradeB: parseFloat(priceGradeB),
+        priceGradeC: parseFloat(priceGradeC),
         referenceSource: referenceSource || 'MPOB',
         note
       }
     });
 
     res.status(201).json(price);
-  } catch (error) {
-    res.status(500).json({ message: 'Error creating price', error });
+  } catch (error: any) {
+    res.status(500).json({ message: 'Error creating price', error: error.message });
   }
 };
 
@@ -86,17 +96,17 @@ export const updatePrice = async (req: Request, res: Response) => {
     const price = await prisma.dailyPrice.update({
       where: { id: parseInt(id) },
       data: {
-        priceGradeA,
-        priceGradeB,
-        priceGradeC,
+        priceGradeA: parseFloat(priceGradeA),
+        priceGradeB: parseFloat(priceGradeB),
+        priceGradeC: parseFloat(priceGradeC),
         referenceSource,
         note
       }
     });
 
     res.json(price);
-  } catch (error) {
-    res.status(500).json({ message: 'Error updating price', error });
+  } catch (error: any) {
+    res.status(500).json({ message: 'Error updating price', error: error.message });
   }
 };
 

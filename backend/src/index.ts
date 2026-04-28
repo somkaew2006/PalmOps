@@ -9,6 +9,8 @@ import farmerRoutes from './routes/farmerRoutes';
 import vehicleRoutes from './routes/vehicleRoutes';
 import priceRoutes from './routes/priceRoutes';
 import weighRoutes from './routes/weighRoutes';
+import branchRoutes from './routes/branchRoutes';
+import saleRoutes from './routes/saleRoutes';
 import { getDashboardStats } from './controllers/statsController';
 import { getReportData } from './controllers/reportController';
 import { protect } from './middlewares/authMiddleware';
@@ -35,6 +37,8 @@ app.use('/api/farmers', farmerRoutes);
 app.use('/api/vehicles', vehicleRoutes);
 app.use('/api/prices', priceRoutes);
 app.use('/api/weigh', weighRoutes);
+app.use('/api/branches', branchRoutes);
+app.use('/api/sales', saleRoutes);
 app.use('/api/stats', protect, getDashboardStats);
 app.use('/api/reports', protect, getReportData);
 

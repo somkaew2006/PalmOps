@@ -9,6 +9,8 @@ import {
   CircleDollarSign, 
   LineChart, 
   Truck,
+  Building,
+  ShoppingCart,
   MoreHorizontal
 } from 'lucide-react';
 
@@ -25,7 +27,9 @@ const Layout = () => {
       case '/price': return 'ราคารับซื้อ';
       case '/report': return 'รายงาน';
       case '/vehicles': return 'ยานพาหนะ';
-      default: return 'PalmBiz';
+      case '/branches': return 'สาขาและสต็อก';
+      case '/sales': return 'บันทึกการขาย';
+      default: return 'PalmOps';
     }
   };
 
@@ -57,7 +61,7 @@ const Layout = () => {
                 <span className="text-white text-lg">🌿</span>
               </div>
               <div className="flex flex-col">
-                <span className="leading-none text-white">PalmBiz</span>
+                <span className="leading-none text-white">PalmOps</span>
                 <span className="text-[10px] text-white/60 font-normal mt-1">ระบบรับซื้อปาล์มน้ำมัน</span>
               </div>
             </div>
@@ -99,6 +103,14 @@ const Layout = () => {
                 </>
               )}
             </NavLink>
+            <NavLink to="/sales" className={({isActive}) => `flex items-center gap-3 px-6 py-3 text-[14px] font-medium transition-all duration-200 group relative ${isActive ? 'bg-white/10 text-white' : 'text-white/70 hover:text-white hover:bg-white/5'}`}>
+              {({isActive}) => (
+                <>
+                  {isActive && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-white rounded-r-full" />}
+                  <ShoppingCart className={`w-5 h-5 transition-colors ${isActive ? 'text-white' : 'text-white/50 group-hover:text-white/80'}`} /> การขาย (ส่งออก)
+                </>
+              )}
+            </NavLink>
 
             <div className="px-6 text-[11px] font-bold text-white/40 uppercase tracking-widest mb-4 mt-8">จัดการ</div>
             <NavLink to="/price" className={({isActive}) => `flex items-center gap-3 px-6 py-3 text-[14px] font-medium transition-all duration-200 group relative ${isActive ? 'bg-white/10 text-white' : 'text-white/70 hover:text-white hover:bg-white/5'}`}>
@@ -122,6 +134,14 @@ const Layout = () => {
                 <>
                   {isActive && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-white rounded-r-full" />}
                   <Truck className={`w-5 h-5 transition-colors ${isActive ? 'text-white' : 'text-white/50 group-hover:text-white/80'}`} /> ยานพาหนะ
+                </>
+              )}
+            </NavLink>
+            <NavLink to="/branches" className={({isActive}) => `flex items-center gap-3 px-6 py-3 text-[14px] font-medium transition-all duration-200 group relative ${isActive ? 'bg-white/10 text-white' : 'text-white/70 hover:text-white hover:bg-white/5'}`}>
+              {({isActive}) => (
+                <>
+                  {isActive && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-white rounded-r-full" />}
+                  <Building className={`w-5 h-5 transition-colors ${isActive ? 'text-white' : 'text-white/50 group-hover:text-white/80'}`} /> สาขาและสต็อก
                 </>
               )}
             </NavLink>
@@ -150,7 +170,7 @@ const Layout = () => {
           <div className="h-16 border-b border-[var(--color-border-dark)] bg-transparent flex items-center justify-between px-8 shrink-0 relative z-10">
             <div>
               <h2 className="text-xl font-heading font-semibold text-white">{getPageTitle()}</h2>
-              <div className="text-[11px] text-neutral-400 mt-0.5">PalmBiz Dashboard & Analytics</div>
+              <div className="text-[11px] text-neutral-400 mt-0.5">PalmOps Dashboard & Analytics</div>
             </div>
             
             <div className="flex items-center gap-4">

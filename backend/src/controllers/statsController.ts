@@ -3,40 +3,61 @@ import prisma from '../config/prisma';
 
 export const getDashboardStats = async (req: Request, res: Response) => {
   try {
+    const branchId = req.query.branchId ? parseInt(req.query.branchId as string) : null;
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    console.log('Dashboard Stats Filter - Today:', today.toISOString());
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
 
-    // Fetch all tickets for today to calculate stats manually (more robust for generated columns)
-    const [ticketsToday, todayPrice, latestTickets] = await Promise.all([
-      prisma.weighTicket.findMany({
-        where: { weighInAt: { gte: today } }
-      }),
+    const whereClause: any = {
+      weighInAt: { gte: today, lt: tomorrow },
+      status: { in: ['confirmed', 'paid'] }
+    };
+    if (branchId) whereClause.branchId = branchId;
+
+    const saleWhereClause: any = {
+      saleDate: { gte: today, lt: tomorrow },
+      status: 'completed'
+    };
+    if (branchId) saleWhereClause.branchId = branchId;
+
+    const latestWhereClause: any = {};
+    if (branchId) latestWhereClause.branchId = branchId;
+
+    const [ticketsToday, salesToday, todayPrice, latestTickets] = await Promise.all([
+      prisma.weighTicket.findMany({ where: whereClause }),
+      prisma.sale.findMany({ where: saleWhereClause }),
       prisma.dailyPrice.findFirst({
+        where: branchId ? { branchId } : undefined,
         orderBy: { priceDate: 'desc' }
       }),
       prisma.weighTicket.findMany({
-        take: 5,
+        where: latestWhereClause,
+        take: 8,
         include: {
           farmer: true,
-          vehicle: true
+          vehicle: true,
+          branch: true
         },
         orderBy: { weighInAt: 'desc' }
       })
     ]);
 
-    console.log('Tickets found for today:', ticketsToday.length);
-
     const ticketCount = ticketsToday.length;
     const totalWeight = ticketsToday.reduce((sum, t) => sum + parseFloat(t.finalWeightKg?.toString() || '0'), 0);
     const todayAmount = ticketsToday.reduce((sum, t) => sum + parseFloat(t.totalAmount?.toString() || '0'), 0);
 
-    console.log(`Stats calculation: Count=${ticketCount}, Weight=${totalWeight}, Amount=${todayAmount}`);
+    const saleCount = salesToday.length;
+    const saleWeight = salesToday.reduce((sum, s) => sum + parseFloat(s.quantityKg.toString()), 0);
+    const saleAmount = salesToday.reduce((sum, s) => sum + parseFloat(s.totalAmount?.toString() || '0'), 0);
 
     res.json({
       ticketCount,
       totalWeight,
       todayAmount,
+      saleCount,
+      saleWeight,
+      saleAmount,
       todayPrice: Number(todayPrice?.priceGradeA || 0),
       latestTickets
     });

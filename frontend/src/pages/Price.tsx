@@ -10,15 +10,25 @@ interface DailyPrice {
   priceGradeC: number;
   referenceSource: string;
   note?: string;
+  branchId: number;
+  branch?: { branchName: string };
+}
+
+interface Branch {
+  id: number;
+  branchName: string;
 }
 
 const Price = () => {
   const [prices, setPrices] = useState<DailyPrice[]>([]);
+  const [branches, setBranches] = useState<Branch[]>([]);
+  const [selectedBranchId, setSelectedBranchId] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [saving, setSaving] = useState(false);
   
   const [formData, setFormData] = useState({
+    branchId: '',
     priceGradeA: '',
     priceGradeB: '',
     priceGradeC: '',
@@ -27,14 +37,33 @@ const Price = () => {
   });
 
   useEffect(() => {
-    fetchPrices();
+    const init = async () => {
+      try {
+        const bRes = await api.get('/branches');
+        setBranches(bRes.data);
+        if (bRes.data.length > 0) {
+          setSelectedBranchId(bRes.data[0].id.toString());
+        }
+      } catch (error) {
+        console.error('Error fetching branches:', error);
+      }
+    };
+    init();
   }, []);
 
-  const fetchPrices = async () => {
+  useEffect(() => {
+    if (selectedBranchId) {
+      fetchPrices(selectedBranchId);
+    }
+  }, [selectedBranchId]);
+
+  const fetchPrices = async (branchId: string) => {
     try {
       setLoading(true);
-      const response = await api.get('/prices');
-      setPrices(response.data);
+      const response = await api.get(`/prices`);
+      // For now, filter on client side or update backend to support branchId filter
+      const filtered = response.data.filter((p: DailyPrice) => p.branchId.toString() === branchId);
+      setPrices(filtered);
     } catch (error) {
       console.error('Error fetching prices:', error);
     } finally {
@@ -48,6 +77,7 @@ const Price = () => {
   const handleOpenModal = () => {
     if (todayPrice) {
       setFormData({
+        branchId: selectedBranchId,
         priceGradeA: todayPrice.priceGradeA.toString(),
         priceGradeB: todayPrice.priceGradeB.toString(),
         priceGradeC: todayPrice.priceGradeC.toString(),
@@ -56,6 +86,7 @@ const Price = () => {
       });
     } else {
       setFormData({
+        branchId: selectedBranchId,
         priceGradeA: '',
         priceGradeB: '',
         priceGradeC: '',
@@ -70,6 +101,7 @@ const Price = () => {
     try {
       const payload = {
         ...formData,
+        branchId: parseInt(formData.branchId),
         priceGradeA: parseFloat(formData.priceGradeA) || 0,
         priceGradeB: parseFloat(formData.priceGradeB) || 0,
         priceGradeC: parseFloat(formData.priceGradeC) || 0
@@ -77,17 +109,15 @@ const Price = () => {
 
       setSaving(true);
       if (isToday && todayPrice) {
-        // Update existing today's price
         await api.put(`/prices/${todayPrice.id}`, payload);
       } else {
-        // Create new price for today
         await api.post('/prices', {
           ...payload,
           priceDate: new Date().toISOString()
         });
       }
       setShowModal(false);
-      fetchPrices();
+      fetchPrices(selectedBranchId);
       alert('บันทึกราคาเรียบร้อยแล้ว');
     } catch (error: any) {
       console.error('Error saving price:', error);
@@ -98,7 +128,23 @@ const Price = () => {
   };
 
   return (
-    <div className="space-y-4 animate-in fade-in duration-300">
+    <div className="space-y-6 animate-in fade-in duration-300">
+      {/* Branch Selector */}
+      <div className="flex items-center gap-4 bg-black/20 p-2 rounded-2xl border border-white/5 w-fit">
+        {branches.map(branch => (
+          <button
+            key={branch.id}
+            onClick={() => setSelectedBranchId(branch.id.toString())}
+            className={`px-6 py-2 rounded-xl text-sm font-bold transition-all ${
+              selectedBranchId === branch.id.toString() 
+                ? 'bg-brand-green text-white shadow-lg' 
+                : 'text-neutral-500 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            {branch.branchName}
+          </button>
+        ))}
+      </div>
       {/* Today Price Banner */}
       <div className="bg-gradient-to-br from-brand-green to-emerald-900 border border-brand-green/30 rounded-3xl p-8 text-white flex justify-between items-center shadow-2xl relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-20 -mt-20 blur-3xl"></div>
