@@ -95,14 +95,6 @@ const Branches = () => {
           <Building className="w-5 h-5 text-brand-light" />
           รายการสาขาและสต็อกสินค้า
         </h3>
-        {!showForm && (
-          <button 
-            onClick={() => setShowForm(true)}
-            className="px-6 py-2.5 bg-gradient-to-r from-brand-green to-emerald-600 text-white rounded-xl font-bold shadow-lg shadow-brand-green/20 hover:scale-105 transition-all flex items-center gap-2"
-          >
-            <Plus className="w-5 h-5" /> เพิ่มสาขาใหม่
-          </button>
-        )}
       </div>
 
       {showForm && (

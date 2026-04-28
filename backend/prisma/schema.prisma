@@ -76,7 +76,7 @@ model Vehicle {
 
 model DailyPrice {
   id              Int      @id @default(autoincrement())
-  priceDate       DateTime @unique @map("price_date") @db.Date
+  priceDate       DateTime @map("price_date") @db.Date
   priceGradeA     Decimal  @map("price_grade_a") @db.Decimal(8, 2)
   priceGradeB     Decimal  @map("price_grade_b") @db.Decimal(8, 2)
   priceGradeC     Decimal  @map("price_grade_c") @db.Decimal(8, 2)

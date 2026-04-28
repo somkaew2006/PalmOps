@@ -59,7 +59,7 @@ export const deleteExpense = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     await prisma.expense.delete({
-      where: { id: parseInt(id) }
+      where: { id: parseInt(id as string) }
     });
     res.json({ message: 'Expense deleted successfully' });
   } catch (error: any) {

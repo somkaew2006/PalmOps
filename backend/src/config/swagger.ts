@@ -38,4 +38,4 @@ const options: swaggerJSDoc.Options = {
 
 export const swaggerSpec = swaggerJSDoc(options);
 console.log(`!!! Swagger checking paths: ${JSON.stringify(options.apis)} !!!`);
-console.log(`!!! Swagger loaded with ${Object.keys(swaggerSpec.paths || {}).length} paths !!!`);
+console.log(`!!! Swagger loaded with ${Object.keys((swaggerSpec as any).paths || {}).length} paths !!!`);

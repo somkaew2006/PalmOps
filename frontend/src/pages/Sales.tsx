@@ -98,108 +98,176 @@ const Sales = () => {
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
       <div className="flex justify-between items-center mb-6">
-        <h3 className="text-lg font-bold text-white flex items-center gap-2">
-          <ShoppingCart className="w-5 h-5 text-brand-light" />
-          รายการขายสินค้าออก (ส่งโรงสกัด)
-        </h3>
-        {!showAdd && (
-          <button 
-            onClick={() => setShowAdd(true)} 
-            className="px-6 py-2.5 bg-gradient-to-r from-brand-green to-emerald-600 text-white rounded-xl font-bold shadow-lg shadow-brand-green/20 hover:scale-105 transition-all flex items-center gap-2"
-          >
-            <Plus className="w-5 h-5" /> บันทึกการขายออก
-          </button>
-        )}
+        <div>
+          <h3 className="text-xl font-bold text-white flex items-center gap-2">
+            <ShoppingCart className="w-6 h-6 text-brand-light" />
+            บันทึกการขายสินค้าออก
+          </h3>
+          <p className="text-sm text-neutral-400 mt-1">จัดการรายการส่งสินค้าออกไปยังโรงสกัดและลูกค้าภายนอก</p>
+        </div>
       </div>
 
       {showAdd && (
-        <div className="card border border-brand-light/20 animate-in slide-in-from-top-4 duration-300 mb-8">
-          <div className="flex justify-between items-center mb-6">
-            <h4 className="text-white font-bold">บันทึกการขายออก</h4>
-            <button onClick={() => setShowAdd(false)}><X className="w-5 h-5 text-neutral-500" /></button>
+        <div className="card border border-brand-light/20 animate-in slide-in-from-top-4 duration-300 mb-8 overflow-hidden">
+          <div className="bg-brand-light/5 border-b border-brand-light/10 px-6 py-4 flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-brand-light/10 flex items-center justify-center text-brand-light">
+                <Plus size={20} />
+              </div>
+              <div>
+                <h4 className="text-white font-bold">บันทึกรายการขายใหม่</h4>
+                <p className="text-[10px] text-brand-light/60 uppercase tracking-widest font-bold">New Sale Transaction</p>
+              </div>
+            </div>
+            <button 
+              onClick={() => setShowAdd(false)}
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-neutral-500 hover:bg-white/10 hover:text-white transition-all"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
-          <form onSubmit={handleSave} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="form-group">
-                <label className="flex items-center gap-1.5"><Building className="w-3 h-3" /> สาขาที่ขาย</label>
-                <select 
-                  required
-                  className="w-full bg-[#141414] border border-neutral-800 text-white rounded-xl px-4 py-2"
-                  value={formData.branchId}
-                  onChange={e => setFormData({...formData, branchId: e.target.value})}
-                >
-                  <option value="">เลือกสาขา...</option>
-                  {branches.map(b => <option key={b.id} value={b.id}>{b.branchName}</option>)}
-                </select>
-                <div className="mt-2 p-2 bg-brand-light/5 border border-brand-light/10 rounded-xl">
-                  <div className="text-[10px] text-neutral-500 uppercase font-bold tracking-wider">สต็อกคงเหลือเกรด {formData.grade}</div>
-                  <div className="text-sm text-emerald-400 font-bold">{Number(currentStock).toLocaleString()} กก.</div>
+
+          <form onSubmit={handleSave} className="p-6 space-y-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* Section 1: Basic Info */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 text-brand-light mb-2">
+                  <Building size={16} />
+                  <span className="text-xs font-bold uppercase tracking-wider">ข้อมูลพื้นฐาน</span>
                 </div>
-              </div>
-              <div className="form-group">
-                <label className="flex items-center gap-1.5"><User className="w-3 h-3" /> ชื่อลูกค้า/โรงงาน</label>
-                <input 
-                  type="text" 
-                  required
-                  value={formData.customerName}
-                  onChange={e => setFormData({...formData, customerName: e.target.value})}
-                  placeholder="เช่น โรงงาน A"
-                />
-              </div>
-              <div className="form-group">
-                <label className="flex items-center gap-1.5"><Calendar className="w-3 h-3" /> วันที่ขาย</label>
-                <input 
-                  type="datetime-local" 
-                  required
-                  value={formData.saleDate}
-                  onChange={e => setFormData({...formData, saleDate: e.target.value})}
-                  className="[color-scheme:dark]"
-                />
-              </div>
-              <div className="form-group">
-                <label>เกรดสินค้า</label>
-                <select 
-                  className="w-full bg-[#141414] border border-neutral-800 text-white rounded-xl px-4 py-2"
-                  value={formData.grade}
-                  onChange={e => setFormData({...formData, grade: e.target.value})}
-                >
-                  <option value="A">เกรด A</option>
-                  <option value="B">เกรด B</option>
-                  <option value="C">เกรด C</option>
-                </select>
-              </div>
-              <div className="form-group">
-                <label>จำนวนที่ขาย (กก.)</label>
-                <input 
-                  type="number" 
-                  required
-                  value={formData.quantityKg}
-                  onChange={e => setFormData({...formData, quantityKg: e.target.value})}
-                  placeholder="0.00"
-                />
-              </div>
-              <div className="form-group">
-                <label>ราคาต่อหน่วย (บาท)</label>
-                <input 
-                  type="number" 
-                  step="0.01"
-                  required
-                  value={formData.pricePerKg}
-                  onChange={e => setFormData({...formData, pricePerKg: e.target.value})}
-                  placeholder="0.00"
-                />
-              </div>
-              <div className="form-group lg:col-span-2 flex items-end gap-4">
-                <div className="flex-1">
-                  <label>รวมยอดเงิน (บาท)</label>
-                  <div className="bg-black/20 border border-white/10 rounded-xl px-4 py-2 text-lg font-bold text-brand-light">
-                    {Number(parseFloat(formData.quantityKg || '0') * parseFloat(formData.pricePerKg || '0')).toLocaleString()} ฿
+                
+                <div className="form-group">
+                  <label>สาขาที่ดำเนินการ</label>
+                  <select 
+                    required
+                    className="w-full bg-black/40 border border-white/5 text-white rounded-xl px-4 py-3 focus:border-brand-light/50 transition-all"
+                    value={formData.branchId}
+                    onChange={e => setFormData({...formData, branchId: e.target.value})}
+                  >
+                    <option value="">เลือกสาขา...</option>
+                    {branches.map(b => <option key={b.id} value={b.id}>{b.branchName}</option>)}
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label>วันที่ดำเนินการ</label>
+                  <div className="relative">
+                    <input 
+                      type="datetime-local" 
+                      required
+                      value={formData.saleDate}
+                      onChange={e => setFormData({...formData, saleDate: e.target.value})}
+                      className="w-full bg-black/40 border border-white/5 text-white rounded-xl px-4 py-3 [color-scheme:dark]"
+                    />
                   </div>
                 </div>
-                <button type="submit" className="btn-primary py-2.5 px-8 font-bold flex items-center gap-2">
-                  <Save className="w-4 h-4" /> บันทึกการขาย
-                </button>
               </div>
+
+              {/* Section 2: Customer & Product */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 text-brand-light mb-2">
+                  <User size={16} />
+                  <span className="text-xs font-bold uppercase tracking-wider">ข้อมูลลูกค้าและเกรด</span>
+                </div>
+
+                <div className="form-group">
+                  <label>ชื่อลูกค้า / โรงงานปลายทาง</label>
+                  <input 
+                    type="text" 
+                    required
+                    value={formData.customerName}
+                    onChange={e => setFormData({...formData, customerName: e.target.value})}
+                    placeholder="ระบุชื่อโรงงาน หรือลูกค้า..."
+                    className="w-full bg-black/40 border border-white/5 text-white rounded-xl px-4 py-3"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>เกรดสินค้า</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {['A', 'B', 'C'].map(g => (
+                      <button
+                        key={g}
+                        type="button"
+                        onClick={() => setFormData({...formData, grade: g})}
+                        className={`py-2 rounded-xl border transition-all font-bold ${
+                          formData.grade === g 
+                            ? 'bg-brand-light text-black border-brand-light shadow-lg shadow-brand-light/20' 
+                            : 'bg-black/20 text-neutral-400 border-white/5 hover:border-white/20'
+                        }`}
+                      >
+                        เกรด {g}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 3: Quantity & Price */}
+              <div className="bg-white/5 rounded-2xl p-6 space-y-4 border border-white/5 relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
+                  <ShoppingCart size={80} />
+                </div>
+                
+                <div className="flex items-center gap-2 text-brand-light mb-2">
+                  <Scale size={16} />
+                  <span className="text-xs font-bold uppercase tracking-wider">รายละเอียดจำนวนและราคา</span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="form-group">
+                    <label>จำนวน (กก.)</label>
+                    <input 
+                      type="number" 
+                      required
+                      value={formData.quantityKg}
+                      onChange={e => setFormData({...formData, quantityKg: e.target.value})}
+                      placeholder="0.00"
+                      className="w-full bg-black/40 border border-white/5 text-white rounded-xl px-4 py-3 font-mono"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>ราคา/กก. (บาท)</label>
+                    <input 
+                      type="number" 
+                      step="0.01"
+                      required
+                      value={formData.pricePerKg}
+                      onChange={e => setFormData({...formData, pricePerKg: e.target.value})}
+                      placeholder="0.00"
+                      className="w-full bg-black/40 border border-white/5 text-white rounded-xl px-4 py-3 font-mono"
+                    />
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-white/5 mt-4">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm text-neutral-400">สต็อกคงเหลือปัจจุบัน:</span>
+                    <span className="text-sm text-emerald-400 font-bold">{Number(currentStock).toLocaleString()} กก.</span>
+                  </div>
+                  <div className="text-[10px] text-neutral-500 mb-1 uppercase font-bold tracking-widest">ยอดรวมสุทธิ (Net Total)</div>
+                  <div className="text-3xl font-black text-brand-light flex items-baseline gap-2">
+                    {Number(parseFloat(formData.quantityKg || '0') * parseFloat(formData.pricePerKg || '0')).toLocaleString()}
+                    <span className="text-sm font-bold opacity-50">฿</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end pt-4 border-t border-white/5 gap-3">
+              <button 
+                type="button"
+                onClick={() => setShowAdd(false)}
+                className="px-6 py-3 rounded-xl border border-white/10 text-white font-medium hover:bg-white/5 transition-all"
+              >
+                ยกเลิก
+              </button>
+              <button 
+                type="submit" 
+                className="px-10 py-3 bg-gradient-to-r from-brand-green to-emerald-600 text-white rounded-xl font-bold shadow-lg shadow-brand-green/20 hover:scale-105 transition-all flex items-center gap-2"
+              >
+                <Save className="w-5 h-5" /> ยืนยันบันทึกการขายออก
+              </button>
             </div>
           </form>
         </div>

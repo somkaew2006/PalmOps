@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import api from '../api/axios';
-import { Download, FileText, BarChart3, TrendingUp, TrendingDown, Wallet, Calendar, Filter } from 'lucide-react';
+import { Download, FileText, BarChart3, TrendingUp, TrendingDown, Wallet, Calendar } from 'lucide-react';
 
 const Report = () => {
   const [data, setData] = useState<any>(null);

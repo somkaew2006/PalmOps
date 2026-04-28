@@ -47,7 +47,7 @@ export const createProduct = async (req: Request, res: Response) => {
       data: { 
         name, 
         unit, 
-        groupId: parseInt(groupId) 
+        groupId: parseInt(groupId as string) 
       }
     });
     res.status(201).json(product);
