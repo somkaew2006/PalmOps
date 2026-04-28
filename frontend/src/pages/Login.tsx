@@ -52,10 +52,10 @@ const Login = () => {
             )}
             
             <div className="space-y-4">
-              <div className="form-group">
+              <div className="login-field">
                 <label className="text-neutral-400 text-xs font-medium uppercase tracking-wider mb-2 block">Username</label>
                 <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-20">
                     <User className="h-4 w-4 text-neutral-500 group-focus-within:text-brand-light transition-colors" />
                   </div>
                   <input
@@ -63,16 +63,16 @@ const Login = () => {
                     required
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    className="w-full pl-11 pr-4 py-3.5 bg-neutral-900/50 border border-white/5 rounded-xl text-white text-sm focus:outline-none focus:border-brand-light/50 focus:ring-1 focus:ring-brand-light/20 transition-all placeholder:text-neutral-700"
+                    className="w-full !pl-12 pr-4 py-3.5 bg-neutral-900/50 border border-white/5 rounded-xl text-white text-sm focus:outline-none focus:border-brand-light/50 focus:ring-1 focus:ring-brand-light/20 transition-all placeholder:text-neutral-700 relative z-10"
                     placeholder="Enter username"
                   />
                 </div>
               </div>
 
-              <div className="form-group">
+              <div className="login-field">
                 <label className="text-neutral-400 text-xs font-medium uppercase tracking-wider mb-2 block">Password</label>
                 <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-20">
                     <Lock className="h-4 w-4 text-neutral-500 group-focus-within:text-brand-light transition-colors" />
                   </div>
                   <input
@@ -80,7 +80,7 @@ const Login = () => {
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-11 pr-4 py-3.5 bg-neutral-900/50 border border-white/5 rounded-xl text-white text-sm focus:outline-none focus:border-brand-light/50 focus:ring-1 focus:ring-brand-light/20 transition-all placeholder:text-neutral-700"
+                    className="w-full !pl-12 pr-4 py-3.5 bg-neutral-900/50 border border-white/5 rounded-xl text-white text-sm focus:outline-none focus:border-brand-light/50 focus:ring-1 focus:ring-brand-light/20 transition-all placeholder:text-neutral-700 relative z-10"
                     placeholder="••••••••"
                   />
                 </div>
