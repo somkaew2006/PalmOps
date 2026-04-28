@@ -240,7 +240,7 @@ const AddFarmer = () => {
                 <input type="text" name="lineId" value={formData.lineId} onChange={handleChange} placeholder="@somchai" />
               </div>
               <div className="form-group col-span-2 mt-2">
-                <label className="flex items-center gap-3 cursor-pointer p-3 border border-[#3f3f3f] rounded-lg bg-[#252525]">
+                <label className="flex items-center gap-3 cursor-pointer p-3 border border-[#3f3f3f] rounded-xl bg-[#252525]">
                   <div className="relative">
                     <input type="checkbox" name="isActive" checked={formData.isActive} onChange={handleChange} className="sr-only" />
                     <div className={`block w-10 h-6 rounded-full transition-colors ${formData.isActive ? 'bg-brand-green' : 'bg-neutral-600'}`}></div>
@@ -332,7 +332,7 @@ const AddFarmer = () => {
               </div>
               <div className="form-group col-span-2">
                 <label>รายละเอียดที่อยู่ (บ้านเลขที่, หมู่, ซอย)</label>
-                <textarea name="address" value={formData.address} onChange={handleChange} className="w-full px-3.5 py-2.5 border border-[#3f3f3f] rounded-lg text-sm bg-neutral-800 text-neutral-200 focus:outline-none focus:border-brand-light min-h-[80px]" placeholder="เลขที่..."></textarea>
+                <textarea name="address" value={formData.address} onChange={handleChange} className="w-full px-3.5 py-2.5 border border-[#3f3f3f] rounded-xl text-sm bg-neutral-800 text-neutral-200 focus:outline-none focus:border-brand-light min-h-[80px]" placeholder="เลขที่..."></textarea>
               </div>
             </div>
           </div>

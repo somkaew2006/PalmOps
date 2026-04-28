@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import api from '../api/axios';
 import { Building, Plus, Save, X, Edit2 } from 'lucide-react';
 
@@ -32,6 +32,10 @@ const Branches = () => {
 
   useEffect(() => {
     fetchBranches();
+    
+    const handleToggle = () => setShowForm(prev => !prev);
+    window.addEventListener('toggleBranchForm', handleToggle);
+    return () => window.removeEventListener('toggleBranchForm', handleToggle);
   }, []);
 
   const fetchBranches = async () => {
@@ -94,9 +98,9 @@ const Branches = () => {
         {!showForm && (
           <button 
             onClick={() => setShowForm(true)}
-            className="btn-primary flex items-center gap-2"
+            className="px-6 py-2.5 bg-gradient-to-r from-brand-green to-emerald-600 text-white rounded-xl font-bold shadow-lg shadow-brand-green/20 hover:scale-105 transition-all flex items-center gap-2"
           >
-            <Plus className="w-4 h-4" /> เพิ่มสาขา
+            <Plus className="w-5 h-5" /> เพิ่มสาขาใหม่
           </button>
         )}
       </div>
@@ -184,7 +188,7 @@ const Branches = () => {
                   {branch.branchName}
                   <button 
                     onClick={() => handleEdit(branch)}
-                    className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-white/10 rounded-lg transition-all text-neutral-400 hover:text-brand-light"
+                    className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-white/10 rounded-xl transition-all text-neutral-400 hover:text-brand-light"
                     title="แก้ไขสาขา"
                   >
                     <Edit2 className="w-3.5 h-3.5" />
@@ -218,7 +222,7 @@ const Branches = () => {
             </div>
           </div>
         )) : (
-          <div className="col-span-full p-12 text-center text-neutral-500 border border-dashed border-white/10 rounded-3xl">
+          <div className="col-span-full p-12 text-center text-neutral-500 border border-dashed border-white/10 rounded-2xl">
             ยังไม่มีข้อมูลสาขา
           </div>
         )}

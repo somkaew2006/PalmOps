@@ -73,7 +73,7 @@ const Dashboard = () => {
       </div>
       {/* Summary Cards matching screenshot */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-[var(--color-bg-card)] rounded-3xl p-6 border border-[var(--color-border-dark)] shadow-lg relative overflow-hidden group hover:border-brand-green/30 transition-all">
+        <div className="bg-[var(--color-bg-card)] rounded-2xl p-6 border border-[var(--color-border-dark)] shadow-lg relative overflow-hidden group hover:border-brand-green/30 transition-all">
           <div className="text-neutral-400 text-[11px] font-bold uppercase tracking-widest mb-4">ปริมาณรับซื้อวันนี้</div>
           <div className="flex items-baseline gap-2">
             <span className="text-4xl font-black text-brand-green">
@@ -90,7 +90,7 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <div className="bg-[var(--color-bg-card)] rounded-3xl p-6 border border-[var(--color-border-dark)] shadow-lg relative overflow-hidden group hover:border-white/20 transition-all">
+        <div className="bg-[var(--color-bg-card)] rounded-2xl p-6 border border-[var(--color-border-dark)] shadow-lg relative overflow-hidden group hover:border-white/20 transition-all">
           <div className="text-neutral-400 text-[11px] font-bold uppercase tracking-widest mb-4">ใบชั่งวันนี้</div>
           <div className="flex items-baseline gap-2">
             <span className="text-4xl font-black text-white">{stats.ticketCount || 0}</span>
@@ -99,7 +99,7 @@ const Dashboard = () => {
           <div className="text-[11px] text-neutral-500 mt-2 font-medium">08:00 – 16:30</div>
         </div>
 
-        <div className="bg-[var(--color-bg-card)] rounded-3xl p-6 border border-[var(--color-border-dark)] shadow-lg relative overflow-hidden group hover:border-brand-amber/30 transition-all">
+        <div className="bg-[var(--color-bg-card)] rounded-2xl p-6 border border-[var(--color-border-dark)] shadow-lg relative overflow-hidden group hover:border-brand-amber/30 transition-all">
           <div className="text-neutral-400 text-[11px] font-bold uppercase tracking-widest mb-4">ยอดจ่ายเงินวันนี้</div>
           <div className="flex items-baseline gap-2">
             <span className="text-4xl font-black text-brand-amber">
@@ -116,7 +116,7 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <div className="bg-[var(--color-bg-card)] rounded-3xl p-6 border border-[var(--color-border-dark)] shadow-lg relative overflow-hidden group hover:border-white/20 transition-all">
+        <div className="bg-[var(--color-bg-card)] rounded-2xl p-6 border border-[var(--color-border-dark)] shadow-lg relative overflow-hidden group hover:border-white/20 transition-all">
           <div className="text-neutral-400 text-[11px] font-bold uppercase tracking-widest mb-4">ราคาปัจจุบัน</div>
           <div className="flex items-baseline gap-2">
             <span className="text-4xl font-black text-white">{stats.todayPrice || '0.00'}</span>
@@ -130,7 +130,7 @@ const Dashboard = () => {
       <div className="space-y-4">
         <h3 className="text-[15px] font-bold text-white uppercase tracking-wider pl-1">ใบชั่งล่าสุด</h3>
         
-        <div className="bg-[var(--color-bg-card)] border border-[var(--color-border-dark)] rounded-3xl overflow-hidden shadow-2xl">
+        <div className="bg-[var(--color-bg-card)] border border-[var(--color-border-dark)] rounded-2xl overflow-hidden shadow-2xl">
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
@@ -153,7 +153,7 @@ const Dashboard = () => {
                       <span className="text-[10px] text-neutral-500 font-medium">{new Date(ticket.weighInAt).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}</span>
                     </td>
                     <td className="px-6 py-5">
-                      <span className="text-[11px] font-bold text-brand-green bg-brand-green/5 px-2 py-1 rounded-lg border border-brand-green/10">
+                      <span className="text-[11px] font-bold text-brand-green bg-brand-green/5 px-2 py-1 rounded-xl border border-brand-green/10">
                         {ticket.branch?.branchName || '—'}
                       </span>
                     </td>

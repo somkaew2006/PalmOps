@@ -146,7 +146,7 @@ const Price = () => {
         ))}
       </div>
       {/* Today Price Banner */}
-      <div className="bg-gradient-to-br from-brand-green to-emerald-900 border border-brand-green/30 rounded-3xl p-8 text-white flex justify-between items-center shadow-2xl relative overflow-hidden">
+      <div className="bg-gradient-to-br from-brand-green to-emerald-900 border border-brand-green/30 rounded-2xl p-8 text-white flex justify-between items-center shadow-2xl relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-20 -mt-20 blur-3xl"></div>
         <div className="relative z-10">
           <div className="text-[11px] uppercase tracking-[0.2em] font-black text-white/60 mb-2">

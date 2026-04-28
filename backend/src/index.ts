@@ -11,6 +11,8 @@ import priceRoutes from './routes/priceRoutes';
 import weighRoutes from './routes/weighRoutes';
 import branchRoutes from './routes/branchRoutes';
 import saleRoutes from './routes/saleRoutes';
+import expenseRoutes from './routes/expenseRoutes';
+import productRoutes from './routes/productRoutes';
 import { getDashboardStats } from './controllers/statsController';
 import { getReportData } from './controllers/reportController';
 import { protect } from './middlewares/authMiddleware';
@@ -31,15 +33,21 @@ app.use((req, res, next) => {
   next();
 });
 
+// Health check
+app.get('/api/health', (req, res) => res.status(200).json({ status: 'ok' }));
+
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/master-data', productRoutes);
 app.use('/api/farmers', farmerRoutes);
 app.use('/api/vehicles', vehicleRoutes);
 app.use('/api/prices', priceRoutes);
 app.use('/api/weigh', weighRoutes);
 app.use('/api/branches', branchRoutes);
 app.use('/api/sales', saleRoutes);
-app.use('/api/stats', protect, getDashboardStats);
+app.use('/api/expenses', expenseRoutes);
+
+app.get('/api/stats/summary', protect, getDashboardStats);
 app.use('/api/reports', protect, getReportData);
 
 // Health check endpoint
@@ -49,16 +57,18 @@ app.get('/api/health', (req, res) => {
 
 // Swagger API Documentation
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.get('/api-docs-json', (req, res) => res.json(swaggerSpec));
 app.get('/api-docs', (req, res) => res.redirect('/docs'));
 
-// Start server
-const server = app.listen(PORT, () => {
+// Error handling middleware
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error(err.stack);
+  res.status(500).json({ message: 'Something went wrong!', error: err.message });
+});
+
+app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
   console.log(`Swagger docs available at http://localhost:${PORT}/docs`);
 });
 
-// Error handling middleware
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error('GLOBAL ERROR:', err);
-  res.status(500).json({ message: 'Internal Server Error', error: err.message });
-});
+export default app;

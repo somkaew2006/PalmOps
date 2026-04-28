@@ -17,6 +17,11 @@ export const getReportData = async (req: Request, res: Response) => {
     };
     if (branchId) whereClause.branchId = parseInt(branchId as string);
 
+    const expenseWhereClause: any = {
+      expenseDate: { gte: startDate, lte: endDate }
+    };
+    if (branchId) expenseWhereClause.branchId = parseInt(branchId as string);
+    
     const saleWhereClause: any = {
       saleDate: { gte: startDate, lte: endDate },
       status: 'completed'
@@ -24,13 +29,16 @@ export const getReportData = async (req: Request, res: Response) => {
     if (branchId) saleWhereClause.branchId = parseInt(branchId as string);
 
     // 1. Monthly Summary
-    const [tickets, farmersCount, sales] = await Promise.all([
+    const [tickets, farmersCount, sales, expenses] = await Promise.all([
       prisma.weighTicket.findMany({
         where: whereClause
       }),
       prisma.farmer.count(),
       prisma.sale.findMany({
         where: saleWhereClause
+      }),
+      prisma.expense.findMany({
+        where: expenseWhereClause
       })
     ]);
 
@@ -40,6 +48,8 @@ export const getReportData = async (req: Request, res: Response) => {
 
     const totalSaleVolume = sales.reduce((sum, s) => sum + parseFloat(s.quantityKg.toString()), 0);
     const totalSaleAmount = sales.reduce((sum, s) => sum + parseFloat(s.totalAmount?.toString() || '0'), 0);
+
+    const totalOtherExpenseAmount = expenses.reduce((sum, e) => sum + parseFloat(e.amount.toString()), 0);
 
     // 2. Daily Volume (for the requested month)
     const dailyVolume: { [key: string]: number } = {};
@@ -86,7 +96,8 @@ export const getReportData = async (req: Request, res: Response) => {
         ticketCount,
         farmersCount,
         totalSaleVolume: totalSaleVolume / 1000,
-        totalSaleAmount: totalSaleAmount / 1000000
+        totalSaleAmount: totalSaleAmount / 1000000,
+        totalOtherExpenseAmount: totalOtherExpenseAmount / 1000000
       },
       dailyVolume: dailyVolumeChart.slice(-7),
       dailySaleVolume: dailySaleVolumeChart.slice(-7),
@@ -106,6 +117,14 @@ export const getReportData = async (req: Request, res: Response) => {
             branch: { select: { branchName: true } }
           },
           orderBy: { saleDate: 'desc' }
+        }),
+        expenses: await prisma.expense.findMany({
+          where: expenseWhereClause,
+          include: {
+            branch: { select: { branchName: true } },
+            product: { include: { group: true } }
+          },
+          orderBy: { expenseDate: 'desc' }
         })
       }
     });

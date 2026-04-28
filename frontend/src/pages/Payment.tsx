@@ -56,7 +56,7 @@ const Payment = () => {
   return (
     <div className="space-y-4 animate-in fade-in duration-300">
       <div className="flex gap-2 mb-4">
-        <div className="flex-1 px-3.5 py-2.5 bg-neutral-800 border border-[#3f3f3f] rounded-lg text-sm text-neutral-400">
+        <div className="flex-1 px-3.5 py-2.5 bg-neutral-800 border border-[#3f3f3f] rounded-xl text-sm text-neutral-400">
           รายการรอการจ่ายเงิน ({tickets.length} รายการ)
         </div>
         <button className="btn btn-outline border-[#3f3f3f]">ประวัติการจ่าย</button>

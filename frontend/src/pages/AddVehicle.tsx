@@ -140,7 +140,7 @@ const AddVehicle = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {/* Basic Info Section */}
         <div className="md:col-span-2 space-y-6">
-          <div className="bg-[var(--color-bg-card)] border border-[var(--color-border-dark)] rounded-3xl p-8 shadow-2xl space-y-8">
+          <div className="bg-[var(--color-bg-card)] border border-[var(--color-border-dark)] rounded-2xl p-8 shadow-2xl space-y-8">
             <div className="flex items-center gap-3 border-b border-[var(--color-border-dark)] pb-4">
               <div className="w-10 h-10 rounded-2xl bg-brand-green/10 flex items-center justify-center text-brand-green">
                 <Truck size={20} />
@@ -208,7 +208,7 @@ const AddVehicle = () => {
             </div>
           </div>
 
-          <div className="bg-[var(--color-bg-card)] border border-[var(--color-border-dark)] rounded-3xl p-8 shadow-2xl space-y-8">
+          <div className="bg-[var(--color-bg-card)] border border-[var(--color-border-dark)] rounded-2xl p-8 shadow-2xl space-y-8">
             <div className="flex items-center gap-3 border-b border-[var(--color-border-dark)] pb-4">
               <div className="w-10 h-10 rounded-2xl bg-brand-amber/10 flex items-center justify-center text-brand-amber">
                 <User size={20} />
@@ -246,7 +246,7 @@ const AddVehicle = () => {
 
         {/* Sidebar Status Section */}
         <div className="space-y-6">
-          <div className="bg-[var(--color-bg-card)] border border-[var(--color-border-dark)] rounded-3xl p-8 shadow-2xl space-y-6">
+          <div className="bg-[var(--color-bg-card)] border border-[var(--color-border-dark)] rounded-2xl p-8 shadow-2xl space-y-6">
             <div className="flex items-center gap-3 border-b border-[var(--color-border-dark)] pb-4">
               <div className="w-10 h-10 rounded-2xl bg-white/5 flex items-center justify-center text-white">
                 <CheckCircle size={20} />
@@ -265,7 +265,7 @@ const AddVehicle = () => {
                   name="isActive"
                   checked={formData.isActive}
                   onChange={handleChange}
-                  className="w-6 h-6 rounded-lg bg-black border-[var(--color-border-dark)] text-brand-green focus:ring-brand-green/50"
+                  className="w-6 h-6 rounded-xl bg-black border-[var(--color-border-dark)] text-brand-green focus:ring-brand-green/50"
                 />
               </label>
 

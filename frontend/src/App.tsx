@@ -15,6 +15,8 @@ import Vehicles from './pages/Vehicles';
 import AddVehicle from './pages/AddVehicle';
 import Branches from './pages/Branches';
 import Sales from './pages/Sales';
+import Expenses from './pages/Expenses';
+import Products from './pages/Products';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }: { children: ReactNode }) => {
@@ -57,6 +59,8 @@ const AppRoutes = () => {
         <Route path="vehicles/:id" element={<AddVehicle />} />
         <Route path="branches" element={<Branches />} />
         <Route path="sales" element={<Sales />} />
+        <Route path="expenses" element={<Expenses />} />
+        <Route path="products" element={<Products />} />
       </Route>
     </Routes>
   );

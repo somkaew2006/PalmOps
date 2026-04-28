@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import api from '../api/axios';
 import { ShoppingCart, Plus, Save, X, Building, User, Calendar } from 'lucide-react';
 
@@ -39,6 +39,10 @@ const Sales = () => {
 
   useEffect(() => {
     fetchData();
+    
+    const handleToggle = () => setShowAdd(prev => !prev);
+    window.addEventListener('toggleSaleForm', handleToggle);
+    return () => window.removeEventListener('toggleSaleForm', handleToggle);
   }, []);
 
   const fetchData = async () => {
@@ -99,8 +103,11 @@ const Sales = () => {
           รายการขายสินค้าออก (ส่งโรงสกัด)
         </h3>
         {!showAdd && (
-          <button onClick={() => setShowAdd(true)} className="btn-primary flex items-center gap-2">
-            <Plus className="w-4 h-4" /> บันทึกการขาย
+          <button 
+            onClick={() => setShowAdd(true)} 
+            className="px-6 py-2.5 bg-gradient-to-r from-brand-green to-emerald-600 text-white rounded-xl font-bold shadow-lg shadow-brand-green/20 hover:scale-105 transition-all flex items-center gap-2"
+          >
+            <Plus className="w-5 h-5" /> บันทึกการขายออก
           </button>
         )}
       </div>
@@ -124,7 +131,7 @@ const Sales = () => {
                   <option value="">เลือกสาขา...</option>
                   {branches.map(b => <option key={b.id} value={b.id}>{b.branchName}</option>)}
                 </select>
-                <div className="mt-2 p-2 bg-brand-light/5 border border-brand-light/10 rounded-lg">
+                <div className="mt-2 p-2 bg-brand-light/5 border border-brand-light/10 rounded-xl">
                   <div className="text-[10px] text-neutral-500 uppercase font-bold tracking-wider">สต็อกคงเหลือเกรด {formData.grade}</div>
                   <div className="text-sm text-emerald-400 font-bold">{Number(currentStock).toLocaleString()} กก.</div>
                 </div>

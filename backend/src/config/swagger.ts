@@ -1,4 +1,5 @@
 import swaggerJSDoc from 'swagger-jsdoc';
+import path from 'path';
 
 const options: swaggerJSDoc.Options = {
   definition: {
@@ -29,7 +30,12 @@ const options: swaggerJSDoc.Options = {
       },
     ],
   },
-  apis: ['./src/routes/*.ts'],
+  apis: [
+    path.join(__dirname, '../routes/*.ts').replace(/\\/g, '/'),
+    path.join(__dirname, '../routes/*.js').replace(/\\/g, '/'),
+  ],
 };
 
 export const swaggerSpec = swaggerJSDoc(options);
+console.log(`!!! Swagger checking paths: ${JSON.stringify(options.apis)} !!!`);
+console.log(`!!! Swagger loaded with ${Object.keys(swaggerSpec.paths || {}).length} paths !!!`);

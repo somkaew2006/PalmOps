@@ -157,14 +157,14 @@ const Weigh = () => {
         </div>
         <div className="flex gap-3">
           <button 
-            className="px-4 py-2 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 border border-neutral-700"
+            className="px-4 py-2 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 rounded-xl text-sm font-medium transition-colors flex items-center gap-2 border border-neutral-700"
             onClick={() => window.location.reload()}
           >
             <Trash2 className="w-4 h-4" />
             ล้างข้อมูล
           </button>
           <button 
-            className="px-6 py-2 bg-brand-light hover:bg-brand-light/90 text-neutral-900 rounded-lg text-sm font-bold transition-all shadow-lg shadow-brand-light/20 flex items-center gap-2"
+            className="px-6 py-2 bg-brand-light hover:bg-brand-light/90 text-neutral-900 rounded-xl text-sm font-bold transition-all shadow-lg shadow-brand-light/20 flex items-center gap-2"
             onClick={handleSubmit}
           >
             <Save className="w-4 h-4" />
@@ -347,7 +347,7 @@ const Weigh = () => {
 
         {/* Right Column: Summary & Payment */}
         <div className="space-y-6">
-          <div className="bg-[#1e1e1e] border-2 border-brand-light/30 rounded-3xl p-8 shadow-2xl shadow-brand-light/10 relative overflow-hidden h-full flex flex-col">
+          <div className="bg-[#1e1e1e] border-2 border-brand-light/30 rounded-2xl p-8 shadow-2xl shadow-brand-light/10 relative overflow-hidden h-full flex flex-col">
             {/* Glossy Background Effect */}
             <div className="absolute -top-24 -right-24 w-64 h-64 bg-brand-light/10 rounded-full blur-3xl pointer-events-none"></div>
             
@@ -404,7 +404,7 @@ const Weigh = () => {
                     <span>คำนวณตามเกรด {grade} (%FFA {Number(ffa || 0).toFixed(1)})</span>
                   </div>
                   {total > 100000 && (
-                    <div className="flex items-center gap-2 text-xs text-yellow-500 bg-yellow-500/5 p-2 rounded-lg border border-yellow-500/20">
+                    <div className="flex items-center gap-2 text-xs text-yellow-500 bg-yellow-500/5 p-2 rounded-xl border border-yellow-500/20">
                       <AlertCircle className="w-3 h-3" />
                       <span>รายการมูลค่าสูง (เกิน 1 แสนบาท)</span>
                     </div>

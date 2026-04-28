@@ -47,9 +47,9 @@ const Farmers = () => {
           placeholder="🔍 ค้นหาชื่อ หรือ รหัสเกษตรกร..." 
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="flex-1 px-3.5 py-2.5 border border-[var(--color-border-dark)] rounded-lg text-sm bg-neutral-800 text-neutral-200 focus:outline-none focus:border-brand-light"
+          className="flex-1 px-3.5 py-2.5 border border-[var(--color-border-dark)] rounded-xl text-sm bg-neutral-800 text-neutral-200 focus:outline-none focus:border-brand-light"
         />
-        <select className="w-36 px-3.5 py-2.5 border border-[var(--color-border-dark)] rounded-lg text-sm bg-neutral-800 text-neutral-200 focus:outline-none focus:border-brand-light">
+        <select className="w-36 px-3.5 py-2.5 border border-[var(--color-border-dark)] rounded-xl text-sm bg-neutral-800 text-neutral-200 focus:outline-none focus:border-brand-light">
           <option>ทุกสถานะ</option>
           <option>ใช้งาน</option>
           <option>ระงับ</option>

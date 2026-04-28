@@ -34,10 +34,10 @@ const Login = () => {
       <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-brand-green/10 rounded-full blur-[120px] -z-0"></div>
       <div className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-brand-light/5 rounded-full blur-[120px] -z-0"></div>
 
-      <div className="max-w-md w-full p-1 bg-[#1a1a1a]/40 backdrop-blur-xl border border-white/5 rounded-3xl shadow-2xl z-10 mx-4">
-        <div className="bg-[#1a1a1a] rounded-[22px] p-8 md:p-10">
+      <div className="max-w-md w-full p-1 bg-[#1a1a1a]/40 backdrop-blur-xl border border-white/5 rounded-2xl shadow-2xl z-10 mx-4">
+        <div className="bg-[#1a1a1a] rounded-xl p-8 md:p-10">
           <div className="text-center mb-10">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-green to-emerald-600 mb-6 shadow-lg shadow-brand-green/20">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-xl bg-gradient-to-br from-brand-green to-emerald-600 mb-6 shadow-lg shadow-brand-green/20">
               <ShieldCheck className="w-8 h-8 text-white" />
             </div>
             <h2 className="text-3xl font-bold text-white tracking-tight mb-2 font-heading">PalmOps <span className="text-brand-light">Vault</span></h2>
