@@ -3,10 +3,11 @@ import prisma from '../config/prisma';
 
 export const getExpenses = async (req: Request, res: Response) => {
   try {
-    const { branchId, startDate, endDate } = req.query;
+    const { startDate, endDate } = req.query;
+    const branchIdStr = req.query.branchId as string;
     const where: any = {};
     
-    if (branchId) where.branchId = parseInt(branchId as string);
+    if (branchIdStr) where.branchId = parseInt(branchIdStr);
     if (startDate || endDate) {
       where.expenseDate = {};
       if (startDate) where.expenseDate.gte = new Date(startDate as string);
@@ -57,9 +58,9 @@ export const createExpense = async (req: Request, res: Response) => {
 
 export const deleteExpense = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const idStr = req.params.id as string;
     await prisma.expense.delete({
-      where: { id: parseInt(id as string) }
+      where: { id: parseInt(idStr) }
     });
     res.json({ message: 'Expense deleted successfully' });
   } catch (error: any) {

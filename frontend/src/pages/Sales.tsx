@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import api from '../api/axios';
-import { ShoppingCart, Plus, Save, X, Building, User, Calendar } from 'lucide-react';
+import { ShoppingCart, Plus, Save, X, Building, User, Scale } from 'lucide-react';
 
 interface Branch {
   id: number;

@@ -3,7 +3,8 @@ import prisma from '../config/prisma';
 
 export const getDashboardStats = async (req: Request, res: Response) => {
   try {
-    const branchId = req.query.branchId ? parseInt(req.query.branchId as string) : null;
+    const branchIdQuery = req.query.branchId as string;
+    const branchId = branchIdQuery ? parseInt(branchIdQuery) : null;
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const tomorrow = new Date(today);

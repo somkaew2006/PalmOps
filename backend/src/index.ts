@@ -15,6 +15,7 @@ import expenseRoutes from './routes/expenseRoutes';
 import productRoutes from './routes/productRoutes';
 import { getDashboardStats } from './controllers/statsController';
 import { getReportData } from './controllers/reportController';
+import { getBranchStockHistory } from './controllers/branchController';
 import { protect } from './middlewares/authMiddleware';
 
 dotenv.config();
@@ -27,15 +28,6 @@ app.use(cors());
 app.use(express.json());
 app.use(morgan('dev'));
 
-// Global logger to debug connectivity
-app.use((req, res, next) => {
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
-  next();
-});
-
-// Health check
-app.get('/api/health', (req, res) => res.status(200).json({ status: 'ok' }));
-
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/master-data', productRoutes);
@@ -47,8 +39,25 @@ app.use('/api/branches', branchRoutes);
 app.use('/api/sales', saleRoutes);
 app.use('/api/expenses', expenseRoutes);
 
+/**
+ * @swagger
+ * /api/stats/summary:
+ *   get:
+ *     summary: Get dashboard summary statistics
+ *     tags: [Dashboard]
+ *     parameters:
+ *       - in: query
+ *         name: branchId
+ *         schema:
+ *           type: integer
+ *         description: Filter by branch ID
+ *     responses:
+ *       200:
+ *         description: Dashboard statistics
+ */
 app.get('/api/stats/summary', protect, getDashboardStats);
 app.use('/api/reports', protect, getReportData);
+
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

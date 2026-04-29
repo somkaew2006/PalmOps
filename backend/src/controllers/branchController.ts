@@ -20,9 +20,9 @@ export const getBranches = async (req: Request, res: Response) => {
 
 export const getBranch = async (req: Request, res: Response) => {
   try {
-    const id = req.params.id;
+    const id = req.params.id as string;
     const branch = await prisma.branch.findUnique({
-      where: { id: parseInt(id as string) },
+      where: { id: parseInt(id) },
       include: { stocks: true }
     });
     if (!branch) return res.status(404).json({ message: 'Branch not found' });
@@ -62,7 +62,7 @@ export const createBranch = async (req: Request, res: Response) => {
 
 export const updateBranch = async (req: Request, res: Response) => {
   try {
-    const id = req.params.id;
+    const id = req.params.id as string;
     const { branchCode, branchName, address, phone, isActive } = req.body;
     
     console.log('--- UPDATING BRANCH ---');
@@ -70,7 +70,7 @@ export const updateBranch = async (req: Request, res: Response) => {
     console.log('Body:', req.body);
 
     const branch = await prisma.branch.update({
-      where: { id: parseInt(id as string) },
+      where: { id: parseInt(id) },
       data: {
         branchCode,
         branchName,
@@ -90,8 +90,8 @@ export const updateBranch = async (req: Request, res: Response) => {
 
 export const deleteBranch = async (req: Request, res: Response) => {
   try {
-    const id = req.params.id;
-    await prisma.branch.delete({ where: { id: parseInt(id as string) } });
+    const id = req.params.id as string;
+    await prisma.branch.delete({ where: { id: parseInt(id) } });
     res.json({ message: 'Branch deleted successfully' });
   } catch (error: any) {
     res.status(500).json({ message: error.message });
@@ -100,13 +100,69 @@ export const deleteBranch = async (req: Request, res: Response) => {
 
 export const getStocks = async (req: Request, res: Response) => {
   try {
-    const branchId = req.query.branchId as string;
-    const where = branchId ? { branchId: parseInt(branchId as string) } : {};
+    const branchIdStr = req.query.branchId as string;
+    const where = branchIdStr ? { branchId: parseInt(branchIdStr) } : {};
     const stocks = await prisma.stock.findMany({
       where,
       include: { branch: true }
     });
     res.json(stocks);
+  } catch (error: any) {
+    res.status(500).json({ message: error.message });
+  }
+};
+export const getBranchStockHistory = async (req: Request, res: Response) => {
+  try {
+    const branchIdParam = req.params.id as string;
+    const isAll = branchIdParam === 'all';
+    const branchId = isAll ? undefined : parseInt(branchIdParam);
+    
+    // Fetch tickets (Include all except draft)
+    const tickets = await prisma.weighTicket.findMany({
+      where: { 
+        ...(branchId ? { branchId } : {}),
+        status: { not: 'draft' } 
+      },
+      include: { branch: true },
+      orderBy: { weighInAt: 'desc' }
+    });
+
+    // Fetch sales (Include all)
+    const sales = await prisma.sale.findMany({
+      where: { 
+        ...(branchId ? { branchId } : {})
+      },
+      include: { branch: true },
+      orderBy: { saleDate: 'desc' }
+    });
+
+    // Merge and format
+    const history = [
+      ...tickets.map(t => ({
+        id: `t-${t.id}`,
+        date: t.weighInAt,
+        type: 'IN',
+        reference: t.ticketNo,
+        grade: t.grade,
+        quantity: Number(t.finalWeightKg || t.netWeightKg || 0),
+        status: t.status,
+        branchName: t.branch.branchName,
+        description: 'รับซื้อปาล์ม (Stock In)'
+      })),
+      ...sales.map(s => ({
+        id: `s-${s.id}`,
+        date: s.saleDate,
+        type: 'OUT',
+        reference: s.saleNo,
+        grade: s.grade,
+        quantity: Number(s.quantityKg),
+        status: s.status,
+        branchName: s.branch.branchName,
+        description: 'ขายออก (Stock Out)'
+      }))
+    ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    res.json(history);
   } catch (error: any) {
     res.status(500).json({ message: error.message });
   }

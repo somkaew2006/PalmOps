@@ -222,8 +222,8 @@ const Report = () => {
                 </div>
               </div>
               <div className="text-[10px] font-bold text-neutral-500 uppercase mb-1">รายรับรวม (จากการขาย)</div>
-              <div className="text-white font-black text-2xl">{totalSaleAmount.toFixed(2)}</div>
-              <div className="text-[10px] text-brand-green mt-1">ล้านบาท</div>
+              <div className="text-white font-black text-2xl">{totalSaleAmount.toLocaleString()}</div>
+              <div className="text-[10px] text-brand-green mt-1">บาท</div>
             </div>
 
             <div className="stat-card p-6 border-l-4 border-red-500">
@@ -233,8 +233,8 @@ const Report = () => {
                 </div>
               </div>
               <div className="text-[10px] font-bold text-neutral-500 uppercase mb-1">รายจ่ายรับซื้อรวม</div>
-              <div className="text-white font-black text-2xl">{totalAmount.toFixed(2)}</div>
-              <div className="text-[10px] text-red-500 mt-1">ล้านบาท</div>
+              <div className="text-white font-black text-2xl">{totalAmount.toLocaleString()}</div>
+              <div className="text-[10px] text-red-500 mt-1">บาท</div>
             </div>
 
             <div className="stat-card p-6 border-l-4 border-amber-500">
@@ -244,8 +244,8 @@ const Report = () => {
                 </div>
               </div>
               <div className="text-[10px] font-bold text-neutral-500 uppercase mb-1">รายจ่ายอื่นๆ รวม</div>
-              <div className="text-white font-black text-2xl">{totalOtherExpenseAmount.toFixed(2)}</div>
-              <div className="text-[10px] text-amber-500 mt-1">ล้านบาท</div>
+              <div className="text-white font-black text-2xl">{totalOtherExpenseAmount.toLocaleString()}</div>
+              <div className="text-[10px] text-amber-500 mt-1">บาท</div>
             </div>
 
             <div className={`stat-card p-6 border-l-4 ${profit >= 0 ? 'border-brand-light' : 'border-red-600 animate-pulse'}`}>
@@ -255,8 +255,8 @@ const Report = () => {
                 </div>
               </div>
               <div className="text-[10px] font-bold text-neutral-500 uppercase mb-1">กำไร/ขาดทุน เบื้องต้น</div>
-              <div className={`font-black text-2xl ${profit >= 0 ? 'text-brand-light' : 'text-red-500'}`}>{profit.toFixed(2)}</div>
-              <div className={`text-[10px] mt-1 ${profit >= 0 ? 'text-brand-light' : 'text-red-500'}`}>ล้านบาท</div>
+              <div className={`font-black text-2xl ${profit >= 0 ? 'text-brand-light' : 'text-red-500'}`}>{profit.toLocaleString()}</div>
+              <div className={`text-[10px] mt-1 ${profit >= 0 ? 'text-brand-light' : 'text-red-500'}`}>บาท</div>
             </div>
           </div>
 
@@ -275,8 +275,9 @@ const Report = () => {
             </button>
           </div>
 
-          {/* Details Table - Brief View */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Details Table - 3 Column View */}
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+            {/* 1. รายรับจากการขาย */}
             <div className="table-wrap">
               <div className="p-4 border-b border-neutral-800 bg-brand-green/5 font-bold text-sm text-brand-green flex items-center gap-2">
                 <TrendingUp size={14} /> รายละเอียดการขาย (รายรับ)
@@ -287,7 +288,7 @@ const Report = () => {
                     <tr>
                       <th>วันที่</th>
                       <th>ลูกค้า</th>
-                      <th className="text-right">จำนวนเงิน</th>
+                      <th className="text-right">จำนวนเงิน (฿)</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -307,6 +308,41 @@ const Report = () => {
               </div>
             </div>
 
+            {/* 2. รายจ่ายจากการรับซื้อ (เพิ่มใหม่) */}
+            <div className="table-wrap">
+              <div className="p-4 border-b border-neutral-800 bg-red-500/5 font-bold text-sm text-red-500 flex items-center gap-2">
+                <TrendingDown size={14} /> รายละเอียดการรับซื้อปาล์ม
+              </div>
+              <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
+                <table className="text-[11px]">
+                  <thead className="sticky top-0 bg-neutral-900 z-10">
+                    <tr>
+                      <th>วันที่/ใบชั่ง</th>
+                      <th>เกษตรกร</th>
+                      <th className="text-right">จำนวนเงิน (฿)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(data.transactions?.tickets || []).length > 0 ? (
+                      data.transactions.tickets.map((t: any) => (
+                        <tr key={t.id}>
+                          <td>
+                            <div className="text-white font-medium">{t.ticketNo}</div>
+                            <div className="text-[9px] text-neutral-500">{new Date(t.weighInAt).toLocaleDateString('th-TH')}</div>
+                          </td>
+                          <td className="text-neutral-300">{t.farmer?.fullName}</td>
+                          <td className="text-right text-red-400 font-black">{Number(t.totalAmount).toLocaleString()}</td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr><td colSpan={3} className="text-center py-4 text-neutral-500">ไม่มีข้อมูลการรับซื้อ</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* 3. รายจ่ายอื่นๆ */}
             <div className="table-wrap">
               <div className="p-4 border-b border-neutral-800 bg-amber-500/5 font-bold text-sm text-amber-500 flex items-center gap-2">
                 <Wallet size={14} /> รายละเอียดรายจ่ายอื่นๆ
@@ -317,7 +353,7 @@ const Report = () => {
                     <tr>
                       <th>วันที่</th>
                       <th>รายการ</th>
-                      <th className="text-right">จำนวนเงิน</th>
+                      <th className="text-right">จำนวนเงิน (฿)</th>
                     </tr>
                   </thead>
                   <tbody>

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import api from '../api/axios';
-import { Building, Plus, Save, X, Edit2 } from 'lucide-react';
+import { Building, Save, X, Edit2 } from 'lucide-react';
 
 interface Stock {
   grade: string;

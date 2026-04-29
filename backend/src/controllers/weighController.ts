@@ -45,7 +45,7 @@ export const createTicket = async (req: Request, res: Response) => {
       grossWeightKg, tareWeightKg, 
       ffaPercent, oilPercent, moisturePercent, grade,
       deductionKg, deductionNote,
-      pricePerKg, status, note, branchId, photoUrls
+      pricePerKg, status, note, branchId, photoUrls, feeAmount
     } = b;
 
     if (!branchId) {
@@ -59,7 +59,8 @@ export const createTicket = async (req: Request, res: Response) => {
     
     const net = gross - tare;
     const final = net - ded;
-    const total = final * price;
+    const fee = parseFloat(feeAmount || 0);
+    const total = (final * price) - fee;
 
     // Generate unique ticket number
     const dateStr = new Date().toISOString().slice(2, 10).replace(/-/g, '');
@@ -84,6 +85,7 @@ export const createTicket = async (req: Request, res: Response) => {
         deductionNote: deductionNote || '',
         finalWeightKg: final,
         pricePerKg: price,
+        feeAmount: fee,
         totalAmount: total,
         status: status || 'draft',
         note: note || '',
@@ -140,14 +142,16 @@ export const updateTicket = async (req: Request, res: Response) => {
     const tare = data.tareWeightKg !== undefined ? parseFloat(data.tareWeightKg) : existingTicket.tareWeightKg.toNumber();
     const ded = data.deductionKg !== undefined ? parseFloat(data.deductionKg) : existingTicket.deductionKg.toNumber();
     const price = data.pricePerKg !== undefined ? parseFloat(data.pricePerKg) : existingTicket.pricePerKg.toNumber();
+    const fee = data.feeAmount !== undefined ? parseFloat(data.feeAmount) : existingTicket.feeAmount.toNumber();
 
     data.grossWeightKg = gross;
     data.tareWeightKg = tare;
     data.deductionKg = ded;
     data.pricePerKg = price;
+    data.feeAmount = fee;
     data.netWeightKg = gross - tare;
     data.finalWeightKg = data.netWeightKg - ded;
-    data.totalAmount = data.finalWeightKg * price;
+    data.totalAmount = (data.finalWeightKg * price) - fee;
 
     if (data.ffaPercent !== undefined) data.ffaPercent = data.ffaPercent ? parseFloat(data.ffaPercent) : null;
     if (data.oilPercent !== undefined) data.oilPercent = data.oilPercent ? parseFloat(data.oilPercent) : null;
@@ -189,10 +193,41 @@ export const updateTicket = async (req: Request, res: Response) => {
         }
       });
     }
+
+    // Handle Payment creation when status changes to paid
+    if (existingTicket.status !== 'paid' && ticket.status === 'paid') {
+      const totalAmount = ticket.totalAmount ? ticket.totalAmount.toNumber() : 0;
+      
+      // Generate unique payment reference
+      const dateStr = new Date().toISOString().slice(2, 10).replace(/-/g, '');
+      const paymentCount = await prisma.payment.count();
+      const paymentRef = `PV${dateStr}${(paymentCount + 1).toString().padStart(4, '0')}`;
+
+      await prisma.payment.create({
+        data: {
+          paymentRef,
+          farmerId: ticket.farmerId,
+          amount: totalAmount,
+          method: 'bank_transfer',
+          status: 'completed',
+          branchId: ticket.branchId,
+          createdBy: (req as any).user?.id?.toString() || 'system',
+          paymentDate: new Date(),
+          // Link via PaymentItem
+          items: {
+            create: {
+              ticketId: ticket.id,
+              amount: totalAmount
+            }
+          }
+        }
+      });
+    }
     
     res.json(ticket);
   } catch (error: any) {
-    res.status(400).json({ message: error.message });
+    console.error('Update ticket error:', error);
+    res.status(400).json({ message: error.message, stack: error.stack });
   }
 };
 

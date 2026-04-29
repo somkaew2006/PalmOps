@@ -29,10 +29,25 @@ const options: swaggerJSDoc.Options = {
         bearerAuth: [],
       },
     ],
+    tags: [
+      { name: 'Dashboard', description: 'Dashboard summary and statistics' },
+      { name: 'Branches', description: 'Branch management' },
+      { name: 'Stocks', description: 'Inventory and stock movement history' },
+      { name: 'Sales', description: 'Palm oil sale management' },
+      { name: 'Expenses', description: 'Branch expense management' },
+      { name: 'Farmers', description: 'Farmer management' },
+      { name: 'Vehicles', description: 'Vehicle management' },
+      { name: 'Prices', description: 'Daily price management' },
+      { name: 'WeighTickets', description: 'Weighing operations and ticket management' },
+      { name: 'Auth', description: 'Authentication operations' },
+      { name: 'MasterData', description: 'Master data management' }
+    ]
   },
+
   apis: [
-    path.join(__dirname, '../routes/*.ts').replace(/\\/g, '/'),
-    path.join(__dirname, '../routes/*.js').replace(/\\/g, '/'),
+    './src/routes/*.ts',
+    './src/routes/*.js',
+    './src/index.ts'
   ],
 };
 

@@ -84,7 +84,8 @@ export const createSale = async (req: Request, res: Response) => {
 
 export const cancelSale = async (req: Request, res: Response) => {
   try {
-    const id = parseInt(req.params.id as string);
+    const idStr = req.params.id as string;
+    const id = parseInt(idStr);
     
     const sale = await prisma.sale.findUnique({ where: { id } });
     if (!sale) return res.status(404).json({ message: 'ไม่พบรายการขาย' });

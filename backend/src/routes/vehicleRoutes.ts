@@ -43,6 +43,11 @@ router.get('/', getVehicles);
  *         required: true
  *         schema:
  *           type: integer
+ *     responses:
+ *       200:
+ *         description: Vehicle details
+ *       404:
+ *         description: Vehicle not found
  */
 router.get('/:id', getVehicle);
 
@@ -52,6 +57,21 @@ router.get('/:id', getVehicle);
  *   post:
  *     summary: Create a new vehicle
  *     tags: [Vehicles]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [plateNo, vehicleType]
+ *             properties:
+ *               plateNo: { type: string }
+ *               province: { type: string }
+ *               vehicleType: { type: string }
+ *               farmerId: { type: integer }
+ *     responses:
+ *       201:
+ *         description: Vehicle created
  */
 router.post('/', createVehicle);
 
@@ -61,6 +81,25 @@ router.post('/', createVehicle);
  *   put:
  *     summary: Update a vehicle
  *     tags: [Vehicles]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               plateNo: { type: string }
+ *               province: { type: string }
+ *               vehicleType: { type: string }
+ *               farmerId: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Vehicle updated
  */
 router.put('/:id', updateVehicle);
 
@@ -70,7 +109,17 @@ router.put('/:id', updateVehicle);
  *   delete:
  *     summary: Delete a vehicle
  *     tags: [Vehicles]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Vehicle deleted
  */
 router.delete('/:id', deleteVehicle);
+
 
 export default router;

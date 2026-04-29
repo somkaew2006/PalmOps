@@ -91,13 +91,13 @@ export const getReportData = async (req: Request, res: Response) => {
 
     res.json({
       summary: {
-        totalVolume: totalVolume / 1000,
-        totalAmount: totalAmount / 1000000,
+        totalVolume: totalVolume,
+        totalAmount: totalAmount,
         ticketCount,
         farmersCount,
-        totalSaleVolume: totalSaleVolume / 1000,
-        totalSaleAmount: totalSaleAmount / 1000000,
-        totalOtherExpenseAmount: totalOtherExpenseAmount / 1000000
+        totalSaleVolume: totalSaleVolume,
+        totalSaleAmount: totalSaleAmount,
+        totalOtherExpenseAmount: totalOtherExpenseAmount
       },
       dailyVolume: dailyVolumeChart.slice(-7),
       dailySaleVolume: dailySaleVolumeChart.slice(-7),
