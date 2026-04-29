@@ -21,11 +21,12 @@ export const protect = (req: Request, res: Response, next: NextFunction): void =
     } catch (error) {
       console.error('JWT verification failed:', error);
       res.status(401).json({ message: 'Not authorized, token failed' });
+      return;
     }
-  }
-
-  if (!token) {
+  } else {
+    console.warn('[AuthMiddleware] No token found in headers:', req.headers);
     res.status(401).json({ message: 'Not authorized, no token' });
+    return;
   }
 };
 

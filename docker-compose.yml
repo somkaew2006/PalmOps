@@ -3,7 +3,7 @@
 services:
   # Database Service (Postgres)
   db:
-    image: postgres:15-alpine
+    image: postgres:17-alpine
     container_name: palmops-db
     restart: always
     environment:
@@ -13,12 +13,14 @@ services:
     ports:
       - "5435:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U palm_admin -d palm_ops_db"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-palm_admin} -d $${POSTGRES_DB:-palm_ops_db}"]
       interval: 10s
       timeout: 5s
       retries: 5
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./bk_plam-ops.dump:/docker-entrypoint-initdb.d/bk_plam-ops.dump:ro
+      - ./restore-db.sh:/docker-entrypoint-initdb.d/restore-db.sh:ro
 
   # Backend Service (Node.js/Prisma/Express)
   backend:

@@ -1,7 +1,11 @@
 import axios from 'axios';
 
 const api = axios.create({
+<<<<<<< Updated upstream
   baseURL: import.meta.env.VITE_API_URL || '/api/',
+=======
+  baseURL: (import.meta.env.VITE_API_URL || '/api').replace(/\/$/, '') + '/',
+>>>>>>> Stashed changes
 });
 
 // Request interceptor to add the auth token to headers
