@@ -63,6 +63,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       latestTickets
     });
   } catch (error: any) {
+    console.error('Dashboard Stats Error:', error);
     res.status(500).json({ message: error.message });
   }
 };

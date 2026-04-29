@@ -87,6 +87,8 @@ model DailyPrice {
   createdBy       String?  @map("created_by") @db.VarChar(60)
   branchId        Int      @map("branch_id")
   branch          Branch   @relation(fields: [branchId], references: [id])
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   weighTickets    WeighTicket[]
 

@@ -14,6 +14,7 @@ export const getBranches = async (req: Request, res: Response) => {
     });
     res.json(branches);
   } catch (error: any) {
+    console.error('Get Branches Error:', error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -116,27 +117,31 @@ export const getBranchStockHistory = async (req: Request, res: Response) => {
     const branchIdParam = req.params.id as string;
     const isAll = branchIdParam === 'all';
     const branchId = isAll ? undefined : parseInt(branchIdParam);
+    const gradeParam = req.query.grade as string;
     
     // Fetch tickets (Include all except draft)
     const tickets = await prisma.weighTicket.findMany({
       where: { 
         ...(branchId ? { branchId } : {}),
+        ...(gradeParam ? { grade: gradeParam as any } : {}),
         status: { not: 'draft' } 
       },
       include: { branch: true },
-      orderBy: { weighInAt: 'desc' }
+      orderBy: { weighInAt: 'asc' } // Sort asc for balance calculation
     });
 
     // Fetch sales (Include all)
     const sales = await prisma.sale.findMany({
       where: { 
-        ...(branchId ? { branchId } : {})
+        ...(branchId ? { branchId } : {}),
+        ...(gradeParam ? { grade: gradeParam as any } : {})
       },
       include: { branch: true },
-      orderBy: { saleDate: 'desc' }
+      orderBy: { saleDate: 'asc' } // Sort asc for balance calculation
     });
 
-    // Merge and format
+    // Merge and sort ASC for calculation
+    let runningBalance = 0;
     const history = [
       ...tickets.map(t => ({
         id: `t-${t.id}`,
@@ -160,10 +165,29 @@ export const getBranchStockHistory = async (req: Request, res: Response) => {
         branchName: s.branch.branchName,
         description: 'ขายออก (Stock Out)'
       }))
-    ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    ].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-    res.json(history);
+    // Calculate balances
+    const historyWithBalance = history.map(item => {
+      const beginningBalance = runningBalance;
+      if (item.status !== 'cancelled') {
+        if (item.type === 'IN') {
+          runningBalance += item.quantity;
+        } else {
+          runningBalance -= item.quantity;
+        }
+      }
+      return {
+        ...item,
+        beginningBalance,
+        endingBalance: runningBalance
+      };
+    });
+
+    // Return reversed (latest first) for display
+    res.json(historyWithBalance.reverse());
   } catch (error: any) {
+    console.error('Get Stock History Error:', error);
     res.status(500).json({ message: error.message });
   }
 };
