@@ -66,6 +66,32 @@ const Products = () => {
     }
   };
 
+  const handleDeleteProduct = async (id: number, name: string) => {
+    if (!window.confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบสินค้า "${name}"?`)) return;
+    try {
+      await api.delete(`master-data/${id}`);
+      fetchData();
+    } catch (error: any) {
+      console.error('Error deleting product:', error);
+      const message = error.response?.data?.message || 'เกิดข้อผิดพลาดในการลบสินค้า';
+      alert(message);
+    }
+  };
+
+  const handleDeleteGroup = async (e: React.MouseEvent, id: number, name: string) => {
+    e.stopPropagation();
+    if (!window.confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบกลุ่ม "${name}"?`)) return;
+    try {
+      await api.delete(`master-data/groups/${id}`);
+      if (selectedGroup?.id === id) setSelectedGroup(null);
+      fetchData();
+    } catch (error: any) {
+      console.error('Error deleting group:', error);
+      const message = error.response?.data?.message || 'เกิดข้อผิดพลาดในการลบกลุ่มสินค้า';
+      alert(message);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -102,6 +128,12 @@ const Products = () => {
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] bg-neutral-800 px-2 py-0.5 rounded-full">{group.products?.length || 0}</span>
+                    <button 
+                      onClick={(e) => handleDeleteGroup(e, group.id, group.name)}
+                      className="p-1 text-neutral-600 hover:text-red-500 transition-colors"
+                    >
+                      <Trash2 size={12} />
+                    </button>
                     <ChevronRight size={14} />
                   </div>
                 </button>
@@ -152,7 +184,10 @@ const Products = () => {
                         </td>
                         <td>{product.unit || '-'}</td>
                         <td className="text-center">
-                          <button className="p-2 text-neutral-600 hover:text-red-500 transition-colors">
+                          <button 
+                            onClick={() => handleDeleteProduct(product.id, product.name)}
+                            className="p-2 text-neutral-600 hover:text-red-500 transition-colors"
+                          >
                             <Trash2 size={16} />
                           </button>
                         </td>

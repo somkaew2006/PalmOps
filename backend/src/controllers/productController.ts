@@ -56,3 +56,64 @@ export const createProduct = async (req: Request, res: Response) => {
   }
 };
 
+export const deleteProduct = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    console.log(`[DELETE] Product ID: ${id}`);
+    
+    if (!id || isNaN(parseInt(id))) {
+      return res.status(400).json({ message: 'รหัสสินค้าไม่ถูกต้อง' });
+    }
+
+    // Check if product exists
+    const product = await prisma.product.findUnique({
+      where: { id: parseInt(id) }
+    });
+
+    if (!product) {
+      return res.status(404).json({ message: 'ไม่พบข้อมูลสินค้า' });
+    }
+
+    // Check if product has expenses
+    const productWithExpenses = await prisma.product.findUnique({
+      where: { id: parseInt(id) },
+      include: { _count: { select: { expenses: true } } }
+    });
+
+    if (productWithExpenses?._count.expenses && productWithExpenses._count.expenses > 0) {
+      return res.status(400).json({ message: 'ไม่สามารถลบได้เนื่องจากมีการใช้งานในรายการค่าใช้จ่ายแล้ว' });
+    }
+
+    await prisma.product.delete({
+      where: { id: parseInt(id) }
+    });
+    res.json({ message: 'ลบสินค้าสำเร็จ' });
+  } catch (error: any) {
+    console.error('Delete product error:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const deleteProductGroup = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    // Check if group has products
+    const groupWithProducts = await prisma.productGroup.findUnique({
+      where: { id: parseInt(id) },
+      include: { _count: { select: { products: true } } }
+    });
+
+    if (groupWithProducts?._count.products && groupWithProducts._count.products > 0) {
+      return res.status(400).json({ message: 'ไม่สามารถลบกลุ่มได้เนื่องจากมีสินค้าภายในกลุ่ม' });
+    }
+
+    await prisma.productGroup.delete({
+      where: { id: parseInt(id) }
+    });
+    res.json({ message: 'ลบกลุ่มสินค้าสำเร็จ' });
+  } catch (error: any) {
+    res.status(500).json({ message: error.message });
+  }
+};
+

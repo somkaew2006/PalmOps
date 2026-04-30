@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getProductGroups, getProducts, createProductGroup, createProduct } from '../controllers/productController';
+import { getProductGroups, getProducts, createProductGroup, createProduct, deleteProduct, deleteProductGroup } from '../controllers/productController';
 import { protect } from '../middlewares/authMiddleware';
 
 const router = Router();
@@ -49,6 +49,7 @@ router.use(protect);
  */
 router.get('/groups', getProductGroups);
 router.post('/groups', createProductGroup);
+router.delete('/groups/:id', deleteProductGroup);
 
 /**
  * @swagger
@@ -90,5 +91,10 @@ router.post('/groups', createProductGroup);
  */
 router.get('/', getProducts);
 router.post('/', createProduct);
+
+router.delete('/:id', (req, res, next) => {
+  console.log('!!! DELETE PRODUCT ROUTE MATCHED !!!', req.params.id);
+  next();
+}, deleteProduct);
 
 export default router;

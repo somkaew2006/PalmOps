@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import api from '../api/axios';
-import { History, Building, Search } from 'lucide-react';
+import { History, Building, Search, Tag } from 'lucide-react';
 
 interface StockMovement {
   id: string;
@@ -75,41 +75,50 @@ const StockHistory = () => {
         <div className="form-group">
           <label className="text-xs font-bold text-neutral-500 uppercase mb-2 block">เลือกสาขา</label>
           <div className="relative">
-            <Building className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500 w-4 h-4" />
+            <Building className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500 w-4 h-4" />
             <select
               value={selectedBranchId}
               onChange={(e) => setSelectedBranchId(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 bg-neutral-900 border border-white/10 rounded-xl text-white text-sm outline-none focus:border-brand-light/50"
+              className="w-full !pl-12 pr-10 py-3 bg-neutral-900 border border-white/10 rounded-xl text-white text-sm outline-none focus:border-brand-light/50 appearance-none"
             >
               <option value="all">ทุกสาขา</option>
               {branches.map(b => <option key={b.id} value={b.id}>{b.branchName}</option>)}
             </select>
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-neutral-500">
+              <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" /></svg>
+            </div>
           </div>
         </div>
 
         <div className="form-group">
           <label className="text-xs font-bold text-neutral-500 uppercase mb-2 block">เลือกเกรด</label>
-          <select
-            value={selectedGrade}
-            onChange={(e) => setSelectedGrade(e.target.value)}
-            className="w-full px-4 py-3 bg-neutral-900 border border-white/10 rounded-xl text-white text-sm outline-none focus:border-brand-light/50"
-          >
-            <option value="A">เกรด A</option>
-            <option value="B">เกรด B</option>
-            <option value="C">เกรด C</option>
-          </select>
+          <div className="relative">
+            <Tag className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500 w-4 h-4" />
+            <select
+              value={selectedGrade}
+              onChange={(e) => setSelectedGrade(e.target.value)}
+              className="w-full !pl-12 pr-4 py-3 bg-neutral-900 border border-white/10 rounded-xl text-white text-sm outline-none focus:border-brand-light/50 appearance-none"
+            >
+              <option value="A">เกรด A</option>
+              <option value="B">เกรด B</option>
+              <option value="C">เกรด C</option>
+            </select>
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-neutral-500">
+              <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" /></svg>
+            </div>
+          </div>
         </div>
 
         <div className="form-group md:col-span-2">
           <label className="text-xs font-bold text-neutral-500 uppercase mb-2 block">ค้นหาอ้างอิง</label>
           <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500 w-4 h-4" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500 w-4 h-4" />
             <input
               type="text"
               placeholder="ค้นหาเลขที่อ้างอิง..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 bg-neutral-900 border border-white/10 rounded-xl text-white text-sm outline-none focus:border-brand-light/50"
+              className="w-full !pl-12 pr-4 py-3 bg-neutral-900 border border-white/10 rounded-xl text-white text-sm outline-none focus:border-brand-light/50"
             />
           </div>
         </div>
