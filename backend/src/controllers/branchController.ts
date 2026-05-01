@@ -118,26 +118,45 @@ export const getBranchStockHistory = async (req: Request, res: Response) => {
     const isAll = branchIdParam === 'all';
     const branchId = isAll ? undefined : parseInt(branchIdParam);
     const gradeParam = req.query.grade as string;
+    const monthParam = req.query.month as string; // 1-12
+    const yearParam = req.query.year as string;   // 2024, 2025...
+    console.log(`[StockHistory] Filtering by Branch: ${branchIdParam}, Grade: ${gradeParam}, Month: ${monthParam}, Year: ${yearParam}`);
+
+    let dateFilter: any = {};
+    if (yearParam) {
+      const year = parseInt(yearParam);
+      if (monthParam && parseInt(monthParam) > 0) {
+        const month = parseInt(monthParam);
+        const endOfMonth = new Date(year, month, 0, 23, 59, 59, 999);
+        dateFilter = { lte: endOfMonth };
+      } else {
+        // All months for the selected year
+        const endOfYear = new Date(year, 12, 0, 23, 59, 59, 999);
+        dateFilter = { lte: endOfYear };
+      }
+    }
     
-    // Fetch tickets (Include all except draft)
+    // Fetch tickets (Include all except draft) up to the end of the selected period
     const tickets = await prisma.weighTicket.findMany({
       where: { 
         ...(branchId ? { branchId } : {}),
         ...(gradeParam ? { grade: gradeParam as any } : {}),
-        status: { not: 'draft' } 
+        status: { not: 'draft' },
+        ...(yearParam ? { weighInAt: dateFilter } : {})
       },
       include: { branch: true },
-      orderBy: { weighInAt: 'asc' } // Sort asc for balance calculation
+      orderBy: { weighInAt: 'asc' }
     });
 
-    // Fetch sales (Include all)
+    // Fetch sales up to the end of the selected period
     const sales = await prisma.sale.findMany({
       where: { 
         ...(branchId ? { branchId } : {}),
-        ...(gradeParam ? { grade: gradeParam as any } : {})
+        ...(gradeParam ? { grade: gradeParam as any } : {}),
+        ...(yearParam ? { saleDate: dateFilter } : {})
       },
       include: { branch: true },
-      orderBy: { saleDate: 'asc' } // Sort asc for balance calculation
+      orderBy: { saleDate: 'asc' }
     });
 
     // Merge and sort ASC for calculation
@@ -184,8 +203,32 @@ export const getBranchStockHistory = async (req: Request, res: Response) => {
       };
     });
 
+    // Filter only the selected month if requested
+    let result = historyWithBalance;
+    if (yearParam) {
+      const year = parseInt(yearParam);
+      const monthVal = parseInt(monthParam || '0');
+      
+      console.log(`[FilterDebug] Target Year: ${year}, Target Month: ${monthVal}`);
+
+      result = historyWithBalance.filter((item, index) => {
+        const d = new Date(item.date);
+        const itemYear = d.getFullYear();
+        const itemMonth = d.getMonth() + 1; // 1-12
+        
+        const yearMatch = itemYear === year;
+        const monthMatch = monthVal === 0 || itemMonth === monthVal;
+        
+        if (index < 5) {
+          console.log(`[ItemDebug] Date: ${item.date}, ItemMonth: ${itemMonth}, MonthMatch: ${monthMatch}`);
+        }
+        
+        return yearMatch && monthMatch;
+      });
+    }
+
     // Return reversed (latest first) for display
-    res.json(historyWithBalance.reverse());
+    res.json(result.reverse());
   } catch (error: any) {
     console.error('Get Stock History Error:', error);
     res.status(500).json({ message: error.message });

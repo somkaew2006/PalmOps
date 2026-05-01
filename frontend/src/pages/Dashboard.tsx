@@ -150,7 +150,14 @@ const Dashboard = () => {
                   <tr key={ticket.id} className="hover:bg-white/[0.02] transition-colors group">
                     <td className="px-6 py-5">
                       <span className="text-[13px] font-bold text-white block">{ticket.ticketNo}</span>
-                      <span className="text-[10px] text-neutral-500 font-medium">{new Date(ticket.weighInAt).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}</span>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <span className="text-[10px] text-neutral-500 font-medium">
+                          {new Date(ticket.weighInAt).toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit', year: '2-digit' })}
+                        </span>
+                        <span className="text-[10px] text-brand-green font-bold bg-brand-green/5 px-1 rounded border border-brand-green/10">
+                          {new Date(ticket.weighInAt).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
                     </td>
                     <td className="px-6 py-5">
                       <span className="text-[11px] font-bold text-brand-green bg-brand-green/5 px-2 py-1 rounded-xl border border-brand-green/10">

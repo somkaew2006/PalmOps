@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import api from '../api/axios';
-import { History, Building, Search, Tag } from 'lucide-react';
+import { History, Building, Search, Tag, FileDown, Calendar } from 'lucide-react';
+import * as XLSX from 'xlsx';
 
 interface StockMovement {
   id: string;
@@ -21,6 +22,8 @@ const StockHistory = () => {
   const [branches, setBranches] = useState<any[]>([]);
   const [selectedBranchId, setSelectedBranchId] = useState<string>('all');
   const [selectedGrade, setSelectedGrade] = useState<string>('A');
+  const [selectedMonth, setSelectedMonth] = useState<number>(0); // 0 = All months
+  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -38,12 +41,13 @@ const StockHistory = () => {
 
   useEffect(() => {
     fetchHistory();
-  }, [selectedBranchId, selectedGrade]);
+  }, [selectedBranchId, selectedGrade, selectedMonth, selectedYear]);
 
   const fetchHistory = async () => {
     try {
       setLoading(true);
-      const url = `/branches/${selectedBranchId}/stock-history?grade=${selectedGrade}`;
+      const url = `/branches/${selectedBranchId}/stock-history?grade=${selectedGrade}&month=${selectedMonth}&year=${selectedYear}`;
+      console.log('Fetching stock history from:', url);
       const response = await api.get(url);
       setHistory(response.data);
     } catch (error) {
@@ -59,6 +63,25 @@ const StockHistory = () => {
     item.branchName.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const handleExportExcel = () => {
+    const data = filteredHistory.map(item => ({
+      'วันที่': new Date(item.date).toLocaleDateString('th-TH'),
+      'เวลา': new Date(item.date).toLocaleTimeString('th-TH'),
+      'รายการ': item.description,
+      'อ้างอิง': item.reference,
+      'เกรด': item.grade,
+      'ยอดยกมา': item.beginningBalance,
+      'จำนวน': item.type === 'IN' ? item.quantity : -item.quantity,
+      'คงเหลือ': item.endingBalance,
+      'สาขา': item.branchName
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "StockHistory");
+    XLSX.writeFile(wb, `StockHistory_${selectedGrade}_${new Date().toISOString().split('T')[0]}.xlsx`);
+  };
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -68,6 +91,13 @@ const StockHistory = () => {
           </h2>
           <p className="text-xs text-neutral-500 font-medium uppercase tracking-widest mt-1">Movement with Beginning & Ending Balances</p>
         </div>
+        <button 
+          onClick={handleExportExcel}
+          className="btn btn-outline btn-sm flex items-center gap-2"
+          disabled={filteredHistory.length === 0}
+        >
+          <FileDown size={18} /> Export Excel
+        </button>
       </div>
 
       {/* Filters */}
@@ -109,7 +139,40 @@ const StockHistory = () => {
           </div>
         </div>
 
-        <div className="form-group md:col-span-2">
+        <div className="form-group">
+          <label className="text-xs font-bold text-neutral-500 uppercase mb-2 block">ประจำเดือน</label>
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500 w-4 h-4" />
+              <select
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+                className="w-full !pl-10 pr-2 py-3 bg-neutral-900 border border-white/10 rounded-xl text-white text-xs outline-none focus:border-brand-light/50 appearance-none"
+              >
+                <option value={0}>ทุกเดือน</option>
+                {Array.from({ length: 12 }, (_, i) => (
+                  <option key={i + 1} value={i + 1}>
+                    {new Date(0, i).toLocaleString('th-TH', { month: 'long' })}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="relative w-24">
+              <select
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                className="w-full px-3 py-3 bg-neutral-900 border border-white/10 rounded-xl text-white text-xs outline-none focus:border-brand-light/50 appearance-none"
+              >
+                {Array.from({ length: 5 }, (_, i) => {
+                  const y = new Date().getFullYear() - i;
+                  return <option key={y} value={y}>{y + 543}</option>;
+                })}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div className="form-group md:col-span-1">
           <label className="text-xs font-bold text-neutral-500 uppercase mb-2 block">ค้นหาอ้างอิง</label>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500 w-4 h-4" />

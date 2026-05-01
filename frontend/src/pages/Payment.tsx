@@ -15,6 +15,7 @@ interface Ticket {
   grade: string;
   totalAmount: number;
   status: string;
+  weighInAt: string;
 }
 
 const PaymentItem = ({ ticket, onPay, processingId }: { ticket: Ticket; onPay: (id: number, useFee: number) => void; processingId: number | null }) => {
@@ -33,7 +34,7 @@ const PaymentItem = ({ ticket, onPay, processingId }: { ticket: Ticket; onPay: (
           </span>
         </div>
         <div className="text-[11px] text-neutral-500 mt-0.5">
-          ใบชั่ง <span className="font-mono text-brand-light">{ticket.ticketNo}</span> • {Number(ticket.finalWeightKg).toLocaleString()} กก. เกรด {ticket.grade}
+          ใบชั่ง <span className="font-mono text-brand-light">{ticket.ticketNo}</span> • {new Date(ticket.weighInAt).toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit', year: '2-digit' })} {new Date(ticket.weighInAt).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })} • {Number(ticket.finalWeightKg).toLocaleString()} กก. เกรด {ticket.grade}
         </div>
       </div>
       

@@ -61,13 +61,13 @@ export const deleteProduct = async (req: Request, res: Response) => {
     const { id } = req.params;
     console.log(`[DELETE] Product ID: ${id}`);
     
-    if (!id || isNaN(parseInt(id))) {
+    if (!id || isNaN(parseInt(id as string))) {
       return res.status(400).json({ message: 'รหัสสินค้าไม่ถูกต้อง' });
     }
 
     // Check if product exists
     const product = await prisma.product.findUnique({
-      where: { id: parseInt(id) }
+      where: { id: parseInt(id as string) }
     });
 
     if (!product) {
@@ -76,7 +76,7 @@ export const deleteProduct = async (req: Request, res: Response) => {
 
     // Check if product has expenses
     const productWithExpenses = await prisma.product.findUnique({
-      where: { id: parseInt(id) },
+      where: { id: parseInt(id as string) },
       include: { _count: { select: { expenses: true } } }
     });
 
@@ -85,7 +85,7 @@ export const deleteProduct = async (req: Request, res: Response) => {
     }
 
     await prisma.product.delete({
-      where: { id: parseInt(id) }
+      where: { id: parseInt(id as string) }
     });
     res.json({ message: 'ลบสินค้าสำเร็จ' });
   } catch (error: any) {
@@ -100,7 +100,7 @@ export const deleteProductGroup = async (req: Request, res: Response) => {
 
     // Check if group has products
     const groupWithProducts = await prisma.productGroup.findUnique({
-      where: { id: parseInt(id) },
+      where: { id: parseInt(id as string) },
       include: { _count: { select: { products: true } } }
     });
 
@@ -109,7 +109,7 @@ export const deleteProductGroup = async (req: Request, res: Response) => {
     }
 
     await prisma.productGroup.delete({
-      where: { id: parseInt(id) }
+      where: { id: parseInt(id as string) }
     });
     res.json({ message: 'ลบกลุ่มสินค้าสำเร็จ' });
   } catch (error: any) {
