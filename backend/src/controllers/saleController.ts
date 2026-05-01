@@ -4,7 +4,10 @@ import prisma from '../config/prisma';
 export const getSales = async (req: Request, res: Response) => {
   try {
     const sales = await prisma.sale.findMany({
-      include: { branch: true },
+      include: { 
+        branch: true,
+        customer: true
+      },
       orderBy: { saleDate: 'desc' }
     });
     res.json(sales);
@@ -16,7 +19,7 @@ export const getSales = async (req: Request, res: Response) => {
 export const createSale = async (req: Request, res: Response) => {
   try {
     const { 
-      branchId, customerName, saleDate, grade, 
+      branchId, customerId, customerName, saleDate, grade, 
       quantityKg, pricePerKg, totalAmount, note 
     } = req.body;
 
@@ -48,6 +51,7 @@ export const createSale = async (req: Request, res: Response) => {
         data: {
           saleNo,
           branchId: branchIdInt,
+          customerId: customerId && customerId !== 'other' ? parseInt(customerId) : null,
           customerName,
           saleDate: saleDate ? new Date(saleDate) : new Date(),
           grade,

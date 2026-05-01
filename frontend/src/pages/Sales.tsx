@@ -12,6 +12,7 @@ interface Sale {
   id: number;
   saleNo: string;
   branchId: number;
+  customerId: number | null;
   customerName: string;
   saleDate: string;
   grade: string;
@@ -20,15 +21,23 @@ interface Sale {
   totalAmount: number;
   status: string;
   branch: { branchName: string };
+  customer?: { name: string };
+}
+
+interface Customer {
+  id: number;
+  name: string;
 }
 
 const Sales = () => {
   const [sales, setSales] = useState<Sale[]>([]);
   const [branches, setBranches] = useState<Branch[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
   const [formData, setFormData] = useState({
     branchId: '',
+    customerId: '',
     customerName: '',
     saleDate: new Date().toISOString().slice(0, 16),
     grade: 'A',
@@ -48,12 +57,14 @@ const Sales = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [sRes, bRes] = await Promise.all([
+      const [sRes, bRes, cRes] = await Promise.all([
         api.get('/sales'),
-        api.get('/branches')
+        api.get('/branches'),
+        api.get('/customers')
       ]);
       setSales(sRes.data);
       setBranches(bRes.data);
+      setCustomers(cRes.data);
       if (bRes.data.length > 0 && !formData.branchId) {
         setFormData(prev => ({ ...prev, branchId: bRes.data[0].id.toString() }));
       }
@@ -75,7 +86,7 @@ const Sales = () => {
       };
       await api.post('/sales', payload);
       setShowAdd(false);
-      setFormData({ ...formData, customerName: '', quantityKg: '', pricePerKg: '', note: '' });
+      setFormData({ ...formData, customerId: '', customerName: '', quantityKg: '', pricePerKg: '', note: '' });
       fetchData();
     } catch (error: any) {
       alert(error.response?.data?.message || 'เกิดข้อผิดพลาดในการบันทึก');
@@ -171,16 +182,41 @@ const Sales = () => {
                 </div>
 
                 <div className="form-group">
-                  <label>ชื่อลูกค้า / โรงงานปลายทาง</label>
-                  <input 
-                    type="text" 
+                  <label>เลือกชื่อลูกค้า / โรงงานปลายทาง</label>
+                  <select 
                     required
-                    value={formData.customerName}
-                    onChange={e => setFormData({...formData, customerName: e.target.value})}
-                    placeholder="ระบุชื่อโรงงาน หรือลูกค้า..."
-                    className="w-full bg-black/40 border border-white/5 text-white rounded-xl px-4 py-3"
-                  />
+                    value={formData.customerId}
+                    onChange={e => {
+                      const cust = customers.find(c => c.id.toString() === e.target.value);
+                      setFormData({
+                        ...formData, 
+                        customerId: e.target.value,
+                        customerName: cust ? cust.name : ''
+                      });
+                    }}
+                    className="w-full bg-black/40 border border-white/5 text-white rounded-xl px-4 py-3 focus:border-brand-light/50 transition-all"
+                  >
+                    <option value="">-- เลือกบริษัท / โรงงาน --</option>
+                    {customers.map(c => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
+                    <option value="other">อื่น ๆ (ระบุเอง)</option>
+                  </select>
                 </div>
+
+                {formData.customerId === 'other' && (
+                  <div className="form-group animate-in fade-in slide-in-from-top-2 duration-200">
+                    <label>ระบุชื่อลูกค้า (กรณีไม่มีในระบบ)</label>
+                    <input 
+                      type="text" 
+                      required
+                      value={formData.customerName}
+                      onChange={e => setFormData({...formData, customerName: e.target.value})}
+                      placeholder="ระบุชื่อโรงงาน หรือลูกค้า..."
+                      className="w-full bg-black/40 border border-white/5 text-white rounded-xl px-4 py-3"
+                    />
+                  </div>
+                )}
 
                 <div className="form-group">
                   <label>เกรดสินค้า</label>

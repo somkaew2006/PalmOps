@@ -17,6 +17,7 @@ import Branches from './pages/Branches';
 import Sales from './pages/Sales';
 import Expenses from './pages/Expenses';
 import Products from './pages/Products';
+import Customers from './pages/Customers';
 import StockHistory from './pages/StockHistory';
 
 // Protected Route Component
@@ -62,6 +63,7 @@ const AppRoutes = () => {
         <Route path="sales" element={<Sales />} />
         <Route path="expenses" element={<Expenses />} />
         <Route path="products" element={<Products />} />
+        <Route path="customers" element={<Customers />} />
         <Route path="stock-history" element={<StockHistory />} />
       </Route>
     </Routes>

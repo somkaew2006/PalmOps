@@ -5,6 +5,7 @@ import {
   LayoutDashboard, 
   Scale, 
   Users, 
+  User,
   CreditCard, 
   CircleDollarSign, 
   LineChart, 
@@ -35,6 +36,7 @@ const Layout = () => {
       case '/sales': return 'บันทึกการขาย';
       case '/expenses': return 'รายจ่ายอื่นๆ';
       case '/products': return 'จัดการสินค้า';
+      case '/customers': return 'จัดการลูกค้า';
       case '/stock-history': return 'ประวัติสต็อก';
       default: return 'PalmOps';
     }
@@ -189,6 +191,14 @@ const Layout = () => {
                 <>
                   {isActive && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-white rounded-r-full" />}
                   <Layers className={`w-5 h-5 transition-colors ${isActive ? 'text-white' : 'text-white/50 group-hover:text-white/80'}`} /> จัดการสินค้า/บริการ
+                </>
+              )}
+            </NavLink>
+            <NavLink to="/customers" className={({isActive}) => `flex items-center gap-3 px-6 py-3 text-[14px] font-medium transition-all duration-200 group relative ${isActive ? 'bg-white/10 text-white' : 'text-white/70 hover:text-white hover:bg-white/5'}`}>
+              {({isActive}) => (
+                <>
+                  {isActive && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-white rounded-r-full" />}
+                  <User className={`w-5 h-5 transition-colors ${isActive ? 'text-white' : 'text-white/50 group-hover:text-white/80'}`} /> ลูกค้าและโรงงาน
                 </>
               )}
             </NavLink>

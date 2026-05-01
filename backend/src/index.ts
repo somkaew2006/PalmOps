@@ -13,6 +13,7 @@ import branchRoutes from './routes/branchRoutes';
 import saleRoutes from './routes/saleRoutes';
 import expenseRoutes from './routes/expenseRoutes';
 import productRoutes from './routes/productRoutes';
+import customerRoutes from './routes/customerRoutes';
 import { getDashboardStats } from './controllers/statsController';
 import { getReportData } from './controllers/reportController';
 import { getBranchStockHistory } from './controllers/branchController';
@@ -44,6 +45,7 @@ app.use('/api/weigh', weighRoutes);
 app.use('/api/branches', branchRoutes);
 app.use('/api/sales', saleRoutes);
 app.use('/api/expenses', expenseRoutes);
+app.use('/api/customers', customerRoutes);
 
 /**
  * @swagger

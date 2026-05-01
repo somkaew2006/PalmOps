@@ -20,7 +20,9 @@ const Products = () => {
   const [groups, setGroups] = useState<ProductGroup[]>([]);
   const [showGroupForm, setShowGroupForm] = useState(false);
   const [showProductForm, setShowProductForm] = useState(false);
-  const [selectedGroup, setSelectedGroup] = useState<ProductGroup | null>(null);
+  const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
+
+  const selectedGroup = groups.find(g => g.id === selectedGroupId) || null;
 
   const [groupData, setGroupData] = useState({ name: '', note: '' });
   const [productData, setProductData] = useState({ name: '', unit: '', groupId: '' });
@@ -83,7 +85,7 @@ const Products = () => {
     if (!window.confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบกลุ่ม "${name}"?`)) return;
     try {
       await api.delete(`master-data/groups/${id}`);
-      if (selectedGroup?.id === id) setSelectedGroup(null);
+      if (selectedGroupId === id) setSelectedGroupId(null);
       fetchData();
     } catch (error: any) {
       console.error('Error deleting group:', error);
@@ -119,8 +121,8 @@ const Products = () => {
               {groups.map(group => (
                 <button
                   key={group.id}
-                  onClick={() => setSelectedGroup(group)}
-                  className={`w-full flex items-center justify-between p-4 transition-colors hover:bg-white/5 ${selectedGroup?.id === group.id ? 'bg-brand-light/10 text-brand-light' : 'text-neutral-400'}`}
+                  onClick={() => setSelectedGroupId(group.id)}
+                  className={`w-full flex items-center justify-between p-4 transition-colors hover:bg-white/5 ${selectedGroupId === group.id ? 'bg-brand-light/10 text-brand-light' : 'text-neutral-400'}`}
                 >
                   <div className="flex items-center gap-3">
                     <Layers size={16} />
