@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import api from '../api/axios';
 import { Loader2, DollarSign } from 'lucide-react';
+import { useNotification } from '../context/NotificationContext';
 
 interface Ticket {
   id: number;
@@ -76,6 +77,9 @@ const Payment = () => {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<number | null>(null);
+  const { showAlert } = useNotification();
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 15;
 
   useEffect(() => {
     fetchPendingTickets();
@@ -101,14 +105,19 @@ const Payment = () => {
         feeAmount: feeAmount
       });
       setTickets(prev => prev.filter(t => t.id !== id));
-      alert('บันทึกการจ่ายเงินเรียบร้อยแล้ว' + (feeAmount > 0 ? ` (หักค่าธรรมเนียม ${feeAmount}฿)` : ''));
+      showAlert('บันทึกการจ่ายเงินเรียบร้อยแล้ว' + (feeAmount > 0 ? ` (หักค่าธรรมเนียม ${feeAmount}฿)` : ''), 'success');
     } catch (error) {
       console.error('Error processing payment:', error);
-      alert('เกิดข้อผิดพลาด');
+      showAlert('เกิดข้อผิดพลาดในการบันทึกการจ่ายเงิน', 'error');
     } finally {
       setProcessingId(null);
     }
   };
+
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = tickets.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(tickets.length / itemsPerPage);
 
   return (
     <div className="space-y-4 animate-in fade-in duration-300">
@@ -122,16 +131,42 @@ const Payment = () => {
       <div className="flex flex-col gap-3">
         {loading ? (
           <div className="p-12 text-center text-neutral-500">กำลังโหลดรายการ...</div>
-        ) : tickets.length > 0 ? tickets.map(ticket => (
-          <PaymentItem 
-            key={ticket.id} 
-            ticket={ticket} 
-            onPay={handlePay} 
-            processingId={processingId} 
-          />
-        )) : (
-
-
+        ) : currentItems.length > 0 ? (
+          <>
+            {currentItems.map(ticket => (
+              <PaymentItem 
+                key={ticket.id} 
+                ticket={ticket} 
+                onPay={handlePay} 
+                processingId={processingId} 
+              />
+            ))}
+            
+            {totalPages > 1 && (
+              <div className="mt-4 flex items-center justify-between px-2">
+                <div className="text-[10px] text-neutral-500 uppercase tracking-widest font-bold">
+                  หน้า {currentPage} จาก {totalPages}
+                </div>
+                <div className="flex gap-2">
+                  <button 
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="px-4 py-2 bg-neutral-900 border border-white/5 rounded-xl text-xs text-white disabled:opacity-30 hover:bg-neutral-800 transition-all"
+                  >
+                    ก่อนหน้า
+                  </button>
+                  <button 
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                    className="px-4 py-2 bg-neutral-900 border border-white/5 rounded-xl text-xs text-white disabled:opacity-30 hover:bg-neutral-800 transition-all"
+                  >
+                    ถัดไป
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
+        ) : (
           <div className="p-12 text-center bg-[#252525] border border-[#3f3f3f] border-dashed rounded-2xl">
             <div className="text-neutral-500 mb-2">ไม่มีรายการค้างจ่ายในขณะนี้</div>
             <button className="text-brand-light text-xs font-medium" onClick={fetchPendingTickets}>รีเฟรชข้อมูล</button>

@@ -2,6 +2,7 @@
 import type { ReactNode } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { NotificationProvider } from './context/NotificationContext';
 import Layout from './components/Layout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
@@ -15,10 +16,14 @@ import Vehicles from './pages/Vehicles';
 import AddVehicle from './pages/AddVehicle';
 import Branches from './pages/Branches';
 import Sales from './pages/Sales';
+import StockTransfer from './pages/StockTransfer';
 import Expenses from './pages/Expenses';
 import Products from './pages/Products';
 import Customers from './pages/Customers';
 import StockHistory from './pages/StockHistory';
+import Users from './pages/Users';
+import AdminDatabase from './pages/AdminDatabase';
+
 
 // Protected Route Component
 const ProtectedRoute = ({ children }: { children: ReactNode }) => {
@@ -61,10 +66,14 @@ const AppRoutes = () => {
         <Route path="vehicles/:id" element={<AddVehicle />} />
         <Route path="branches" element={<Branches />} />
         <Route path="sales" element={<Sales />} />
+        <Route path="transfers" element={<StockTransfer />} />
         <Route path="expenses" element={<Expenses />} />
         <Route path="products" element={<Products />} />
         <Route path="customers" element={<Customers />} />
         <Route path="stock-history" element={<StockHistory />} />
+        <Route path="users" element={<Users />} />
+        <Route path="admin/database" element={<AdminDatabase />} />
+
       </Route>
     </Routes>
   );
@@ -73,9 +82,11 @@ const AppRoutes = () => {
 function App() {
   return (
     <AuthProvider>
-      <Router>
-        <AppRoutes />
-      </Router>
+      <NotificationProvider>
+        <Router>
+          <AppRoutes />
+        </Router>
+      </NotificationProvider>
     </AuthProvider>
   );
 }

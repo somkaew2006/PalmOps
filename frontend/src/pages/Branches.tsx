@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import api from '../api/axios';
 import { Building, Save, X, Edit2 } from 'lucide-react';
+import { useNotification } from '../context/NotificationContext';
 
 interface Stock {
   grade: string;
@@ -20,6 +21,7 @@ interface Branch {
 const Branches = () => {
   const [branches, setBranches] = useState<Branch[]>([]);
   const [loading, setLoading] = useState(true);
+  const { showAlert } = useNotification();
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [formData, setFormData] = useState({
@@ -76,9 +78,10 @@ const Branches = () => {
       setEditingId(null);
       setFormData({ branchCode: '', branchName: '', address: '', phone: '', isActive: true });
       fetchBranches();
+      showAlert('บันทึกข้อมูลสาขาสำเร็จ', 'success');
     } catch (error) {
       console.error('Error saving branch:', error);
-      alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
+      showAlert('เกิดข้อผิดพลาดในการบันทึกข้อมูล', 'error');
     }
   };
 

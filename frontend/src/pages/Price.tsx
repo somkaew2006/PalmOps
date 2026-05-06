@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import api from '../api/axios';
 import { Edit2, Save, X, Info } from 'lucide-react';
+import { useNotification } from '../context/NotificationContext';
 
 interface DailyPrice {
   id: number;
@@ -26,6 +27,9 @@ const Price = () => {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [saving, setSaving] = useState(false);
+  const { showAlert } = useNotification();
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 15;
   
   const [formData, setFormData] = useState({
     branchId: '',
@@ -54,6 +58,7 @@ const Price = () => {
   useEffect(() => {
     if (selectedBranchId) {
       fetchPrices(selectedBranchId);
+      setCurrentPage(1);
     }
   }, [selectedBranchId]);
 
@@ -118,14 +123,19 @@ const Price = () => {
       }
       setShowModal(false);
       fetchPrices(selectedBranchId);
-      alert('บันทึกราคาเรียบร้อยแล้ว');
+      showAlert('บันทึกราคาเรียบร้อยแล้ว', 'success');
     } catch (error: any) {
       console.error('Error saving price:', error);
-      alert(error.response?.data?.message || 'ไม่สามารถบันทึกราคาได้');
+      showAlert(error.response?.data?.message || 'ไม่สามารถบันทึกราคาได้', 'error');
     } finally {
       setSaving(false);
     }
   };
+
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = prices.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(prices.length / itemsPerPage);
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
@@ -222,14 +232,14 @@ const Price = () => {
                 </tr>
               </thead>
               <tbody>
-                {prices.length > 0 ? prices.map(price => (
+                {currentItems.length > 0 ? currentItems.map(price => (
                   <tr key={price.id} className="hover:bg-white/[0.01] transition-colors">
-                    <td className="text-white font-bold">{new Date(price.priceDate).toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit', year: '2-digit' })}</td>
-                    <td className="text-brand-light font-black text-[15px]">{Number(price.priceGradeA).toFixed(2)}</td>
-                    <td className="text-amber-500 font-bold">{Number(price.priceGradeB).toFixed(2)}</td>
-                    <td className="text-neutral-500 font-medium">{Number(price.priceGradeC).toFixed(2)}</td>
-                    <td className="text-[11px] font-bold text-neutral-400 uppercase">{price.referenceSource}</td>
-                    <td className="text-right text-[11px] text-neutral-600 italic">{price.note || '—'}</td>
+                    <td className="px-6 py-4 text-white font-bold">{new Date(price.priceDate).toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit', year: '2-digit' })}</td>
+                    <td className="px-6 py-4 text-brand-light font-black text-[15px]">{Number(price.priceGradeA).toFixed(2)}</td>
+                    <td className="px-6 py-4 text-amber-500 font-bold">{Number(price.priceGradeB).toFixed(2)}</td>
+                    <td className="px-6 py-4 text-neutral-500 font-medium">{Number(price.priceGradeC).toFixed(2)}</td>
+                    <td className="px-6 py-4 text-[11px] font-bold text-neutral-400 uppercase">{price.referenceSource}</td>
+                    <td className="px-6 py-4 text-right text-[11px] text-neutral-600 italic">{price.note || '—'}</td>
                   </tr>
                 )) : (
                   <tr>
@@ -240,6 +250,46 @@ const Price = () => {
             </table>
           )}
         </div>
+
+        {/* Pagination Controls */}
+        {!loading && totalPages > 1 && (
+          <div className="px-6 py-4 bg-black/20 border-t border-white/5 flex items-center justify-between">
+            <div className="text-xs text-neutral-500">
+              แสดง {indexOfFirstItem + 1} ถึง {Math.min(indexOfLastItem, prices.length)} จากทั้งหมด {prices.length} รายการ
+            </div>
+            <div className="flex gap-2">
+              <button 
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+                className="px-4 py-2 bg-neutral-900 border border-white/10 rounded-xl text-xs text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-neutral-800 transition-colors"
+              >
+                ก่อนหน้า
+              </button>
+              <div className="flex gap-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    className={`w-8 h-8 rounded-xl text-xs font-bold transition-all ${
+                      currentPage === page 
+                        ? 'bg-brand-light text-black shadow-lg shadow-brand-light/20' 
+                        : 'bg-neutral-900 text-neutral-400 hover:text-white border border-white/5'
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+              </div>
+              <button 
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages}
+                className="px-4 py-2 bg-neutral-900 border border-white/10 rounded-xl text-xs text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-neutral-800 transition-colors"
+              >
+                ถัดไป
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Adjustment Modal */}

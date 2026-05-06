@@ -9,6 +9,7 @@ import {
   Trash2
 } from 'lucide-react';
 import api from '../api/axios';
+import { useNotification } from '../context/NotificationContext';
 
 const AddVehicle = () => {
   const navigate = useNavigate();
@@ -27,6 +28,7 @@ const AddVehicle = () => {
 
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
+  const { showAlert } = useNotification();
 
   useEffect(() => {
     if (isEdit) {
@@ -50,7 +52,7 @@ const AddVehicle = () => {
       });
     } catch (error) {
       console.error('Error fetching vehicle:', error);
-      alert('ไม่สามารถดึงข้อมูลรถได้');
+      showAlert('ไม่สามารถดึงข้อมูลรถได้', 'error');
     } finally {
       setIsFetching(false);
     }
@@ -67,7 +69,7 @@ const AddVehicle = () => {
 
   const handleSave = async () => {
     if (!formData.licensePlate) {
-      alert('กรุณากรอกทะเบียนรถ');
+      showAlert('กรุณากรอกทะเบียนรถ', 'warning');
       return;
     }
 
@@ -80,15 +82,15 @@ const AddVehicle = () => {
 
       if (isEdit) {
         await api.put(`/vehicles/${id}`, payload);
-        alert('แก้ไขข้อมูลเรียบร้อยแล้ว');
+        showAlert('แก้ไขข้อมูลเรียบร้อยแล้ว', 'success');
       } else {
         await api.post('/vehicles', payload);
-        alert('บันทึกข้อมูลรถเรียบร้อยแล้ว');
+        showAlert('บันทึกข้อมูลรถเรียบร้อยแล้ว', 'success');
       }
       navigate('/vehicles');
     } catch (error: any) {
       console.error('Error saving vehicle:', error);
-      alert(error.response?.data?.message || 'ไม่สามารถบันทึกข้อมูลได้');
+      showAlert(error.response?.data?.message || 'ไม่สามารถบันทึกข้อมูลได้', 'error');
     } finally {
       setIsLoading(false);
     }

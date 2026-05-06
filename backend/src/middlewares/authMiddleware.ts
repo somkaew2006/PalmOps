@@ -12,12 +12,19 @@ export const protect = (req: Request, res: Response, next: NextFunction): void =
   ) {
     try {
       token = req.headers.authorization.split(' ')[1];
-      const decoded = jwt.verify(token, JWT_SECRET);
+      const decoded = jwt.verify(token, JWT_SECRET) as any;
       
+      // ตรวจสอบว่า User อยู่ในบริษัทเดียวกับ Subdomain หรือไม่
+      if (req.companyId && decoded.companyId !== req.companyId) {
+        res.status(403).json({ message: 'คุณไม่มีสิทธิ์เข้าถึงข้อมูลของบริษัทนี้' });
+        return;
+      }
+
       // Add user from payload to request
       (req as any).user = decoded;
       
       next();
+
     } catch (error) {
       console.error('JWT verification failed:', error);
       res.status(401).json({ message: 'Not authorized, token failed' });
@@ -43,4 +50,13 @@ export const authorize = (...roles: string[]) => {
     
     next();
   };
+};
+
+export const adminOnly = (req: Request, res: Response, next: NextFunction): void => {
+  const userRole = (req as any).user?.role;
+  if (userRole !== 'admin') {
+    res.status(403).json({ message: 'Admin access only' });
+    return;
+  }
+  next();
 };

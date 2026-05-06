@@ -1,4 +1,3 @@
-
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { 
@@ -16,12 +15,17 @@ import {
   Layers,
   MoreHorizontal,
   Plus,
-  History
+  History,
+  Shield,
+  Database
 } from 'lucide-react';
 
 const Layout = () => {
-  const { logout } = useAuth();
+  const { logout, user: currentUser } = useAuth();
   const location = useLocation();
+
+  const isAdmin = currentUser?.role === 'admin';
+
 
   const getPageTitle = () => {
     switch (location.pathname) {
@@ -37,7 +41,10 @@ const Layout = () => {
       case '/expenses': return 'รายจ่ายอื่นๆ';
       case '/products': return 'จัดการสินค้า';
       case '/customers': return 'จัดการลูกค้า';
+      case '/transfers': return 'โอนย้ายสต็อก';
       case '/stock-history': return 'ประวัติสต็อก';
+      case '/users': return 'จัดการผู้ใช้งาน';
+      case '/admin/database': return 'จัดการฐานข้อมูล';
       default: return 'PalmOps';
     }
   };
@@ -136,6 +143,14 @@ const Layout = () => {
                 </>
               )}
             </NavLink>
+            <NavLink to="/transfers" className={({isActive}) => `flex items-center gap-3 px-6 py-3 text-[14px] font-medium transition-all duration-200 group relative ${isActive ? 'bg-white/10 text-white' : 'text-white/70 hover:text-white hover:bg-white/5'}`}>
+              {({isActive}) => (
+                <>
+                  {isActive && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-white rounded-r-full" />}
+                  <History className={`w-5 h-5 transition-colors ${isActive ? 'text-white' : 'text-white/50 group-hover:text-white/80'}`} /> โอนย้ายสต็อก
+                </>
+              )}
+            </NavLink>
             <NavLink to="/expenses" className={({isActive}) => `flex items-center gap-3 px-6 py-3 text-[14px] font-medium transition-all duration-200 group relative ${isActive ? 'bg-white/10 text-white' : 'text-white/70 hover:text-white hover:bg-white/5'}`}>
               {({isActive}) => (
                 <>
@@ -202,6 +217,27 @@ const Layout = () => {
                 </>
               )}
             </NavLink>
+            {isAdmin && (
+              <>
+                <NavLink to="/users" className={({isActive}) => `flex items-center gap-3 px-6 py-3 text-[14px] font-medium transition-all duration-200 group relative ${isActive ? 'bg-white/10 text-white' : 'text-white/70 hover:text-white hover:bg-white/5'}`}>
+                  {({isActive}) => (
+                    <>
+                      {isActive && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-white rounded-r-full" />}
+                      <Shield className={`w-5 h-5 transition-colors ${isActive ? 'text-white' : 'text-white/50 group-hover:text-white/80'}`} /> จัดการผู้ใช้งาน
+                    </>
+                  )}
+                </NavLink>
+                <NavLink to="/admin/database" className={({isActive}) => `flex items-center gap-3 px-6 py-3 text-[14px] font-medium transition-all duration-200 group relative ${isActive ? 'bg-white/10 text-white' : 'text-white/70 hover:text-white hover:bg-white/5'}`}>
+                  {({isActive}) => (
+                    <>
+                      {isActive && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-white rounded-r-full" />}
+                      <Database className={`w-5 h-5 transition-colors ${isActive ? 'text-white' : 'text-white/50 group-hover:text-white/80'}`} /> จัดการฐานข้อมูล
+                    </>
+                  )}
+                </NavLink>
+              </>
+            )}
+
           </div>
           
           <div className="p-6 mt-auto">
@@ -209,13 +245,14 @@ const Layout = () => {
               className="flex items-center gap-3 p-3 rounded-2xl bg-black/20 border border-white/10 hover:bg-black/30 transition-all cursor-pointer group"
               onClick={logout}
             >
-              <div className="w-10 h-10 rounded-xl bg-white/10 text-white flex items-center justify-center font-bold text-sm border border-white/10">
-                A
+              <div className="w-10 h-10 rounded-xl bg-white/10 text-white flex items-center justify-center font-bold text-sm border border-white/10 uppercase">
+                {currentUser?.fullName?.charAt(0) || currentUser?.username?.charAt(0) || 'U'}
               </div>
               <div className="flex-1 overflow-hidden">
-                <div className="text-sm font-bold text-white truncate">Admin</div>
-                <div className="text-[10px] text-white/50 truncate">Sign out</div>
+                <div className="text-sm font-bold text-white truncate">{currentUser?.fullName || currentUser?.username}</div>
+                <div className="text-[10px] text-white/50 truncate capitalize">{currentUser?.role} • Sign out</div>
               </div>
+
             </div>
           </div>
         </div>

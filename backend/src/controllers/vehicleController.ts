@@ -1,9 +1,10 @@
 import { Request, Response } from 'express';
-import prisma from '../config/prisma';
+// ลบการ import prisma แบบ global ออก
+
 
 export const getVehicles = async (req: Request, res: Response) => {
   try {
-    const vehicles = await prisma.vehicle.findMany({
+    const vehicles = await req.db.vehicle.findMany({
       orderBy: { createdAt: 'desc' }
     });
     res.json(vehicles);
@@ -15,7 +16,7 @@ export const getVehicles = async (req: Request, res: Response) => {
 export const getVehicle = async (req: Request, res: Response) => {
   try {
     const id = req.params.id as string;
-    const vehicle = await prisma.vehicle.findUnique({
+    const vehicle = await req.db.vehicle.findUnique({
       where: { id: parseInt(id) }
     });
     if (!vehicle) return res.status(404).json({ message: 'Vehicle not found' });
@@ -27,7 +28,7 @@ export const getVehicle = async (req: Request, res: Response) => {
 
 export const createVehicle = async (req: Request, res: Response) => {
   try {
-    const vehicle = await prisma.vehicle.create({
+    const vehicle = await req.db.vehicle.create({
       data: req.body
     });
     res.status(201).json(vehicle);
@@ -39,7 +40,7 @@ export const createVehicle = async (req: Request, res: Response) => {
 export const updateVehicle = async (req: Request, res: Response) => {
   try {
     const id = req.params.id as string;
-    const vehicle = await prisma.vehicle.update({
+    const vehicle = await req.db.vehicle.update({
       where: { id: parseInt(id) },
       data: req.body
     });
@@ -52,7 +53,7 @@ export const updateVehicle = async (req: Request, res: Response) => {
 export const deleteVehicle = async (req: Request, res: Response) => {
   try {
     const id = req.params.id as string;
-    await prisma.vehicle.delete({
+    await req.db.vehicle.delete({
       where: { id: parseInt(id) }
     });
     res.json({ message: 'Vehicle deleted successfully' });

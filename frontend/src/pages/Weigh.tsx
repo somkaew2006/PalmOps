@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '../api/axios';
+import { useNotification } from '../context/NotificationContext';
 import { 
   Scale, 
   User, 
@@ -11,7 +12,8 @@ import {
   BadgePercent,
   CheckCircle,
   AlertCircle,
-  Building
+  Building,
+  Loader2
 } from 'lucide-react';
 
 interface Farmer {
@@ -23,6 +25,7 @@ interface Farmer {
 interface Vehicle {
   id: number;
   licensePlate: string;
+  tareWeightKg: number;
 }
 
 interface Branch {
@@ -42,6 +45,7 @@ const Weigh = () => {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [branches, setBranches] = useState<Branch[]>([]);
   const [todayPrice, setTodayPrice] = useState<Price | null>(null);
+  const { showAlert } = useNotification();
 
   const [farmerId, setFarmerId] = useState<string>('');
   const [vehicleId, setVehicleId] = useState<string>('');
@@ -53,6 +57,10 @@ const Weigh = () => {
   const [oil, setOil] = useState<number>(0);
   const [deduction, setDeduction] = useState<number>(0);
   const [grade, setGrade] = useState<'A' | 'B' | 'C'>('A');
+  const [unitPrice, setUnitPrice] = useState<number>(0);
+  const [totalAmount, setTotalAmount] = useState<number>(0);
+  const [isManualPrice, setIsManualPrice] = useState(false);
+  const [isManualTotal, setIsManualTotal] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -100,23 +108,42 @@ const Weigh = () => {
   const net = Math.max(0, gross - tare);
   const finalWeight = Math.max(0, net - deduction);
   
-  const getPricePerKg = () => {
-    if (!todayPrice) return 0;
-    if (grade === 'A') return todayPrice.priceGradeA;
-    if (grade === 'B') return todayPrice.priceGradeB;
-    return todayPrice.priceGradeC;
-  };
+  // Sync unitPrice when grade or todayPrice changes (if not manual)
+  useEffect(() => {
+    if (!isManualPrice && todayPrice) {
+      let price = 0;
+      if (grade === 'A') price = Number(todayPrice.priceGradeA);
+      else if (grade === 'B') price = Number(todayPrice.priceGradeB);
+      else price = Number(todayPrice.priceGradeC);
+      setUnitPrice(price);
+    }
+  }, [todayPrice, grade, isManualPrice]);
 
-  const currentPrice = getPricePerKg();
-  const total = finalWeight * currentPrice;
+  // Sync totalAmount when weight or price changes (if not manual)
+  useEffect(() => {
+    if (!isManualTotal) {
+      const calculated = finalWeight * unitPrice;
+      setTotalAmount(Number(calculated.toFixed(2)));
+    }
+  }, [finalWeight, unitPrice, isManualTotal]);
+
+  const [saving, setSaving] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const handleSubmit = async () => {
+    console.log('--- Handle Submit Clicked ---');
+    console.log('State:', { farmerId, todayPrice, branchId, gross, tare, deduction, unitPrice, totalAmount });
+    
     try {
       if (!farmerId || !todayPrice || !branchId) {
-        alert('กรุณาเลือกสาขา เกษตรกร และตรวจสอบราคา');
+        console.warn('Missing required fields');
+        showAlert('กรุณาเลือกสาขา เกษตรกร และตรวจสอบราคาให้ครบถ้วน', 'warning');
         return;
       }
 
+      setSaving(true);
+      console.log('Sending payload to server...');
+      
       const payload = {
         farmerId: parseInt(farmerId),
         vehicleId: vehicleId ? parseInt(vehicleId) : null,
@@ -129,19 +156,22 @@ const Weigh = () => {
         grade,
         deductionKg: deduction,
         finalWeightKg: finalWeight,
-        pricePerKg: currentPrice,
-        totalAmount: total,
+        pricePerKg: unitPrice,
+        totalAmount: totalAmount,
         status: 'confirmed',
         branchId: parseInt(branchId),
         note: note
       };
 
       await api.post('/weigh', payload);
-      alert('บันทึกใบชั่งเรียบร้อยแล้ว');
-      window.location.reload();
-    } catch (error) {
+      setShowSuccess(true);
+    } catch (error: any) {
       console.error('Error saving ticket:', error);
-      alert('เกิดข้อผิดพลาดในการบันทึก');
+      const errorMsg = error.response?.data?.message || 'เกิดข้อผิดพลาดในการบันทึก';
+      const errorDetail = error.response?.data?.error || '';
+      showAlert(`${errorMsg}${errorDetail ? '\n' + errorDetail : ''}`, 'error');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -162,13 +192,6 @@ const Weigh = () => {
           >
             <Trash2 className="w-4 h-4" />
             ล้างข้อมูล
-          </button>
-          <button 
-            className="px-6 py-2 bg-brand-light hover:bg-brand-light/90 text-neutral-900 rounded-xl text-sm font-bold transition-all shadow-lg shadow-brand-light/20 flex items-center gap-2"
-            onClick={handleSubmit}
-          >
-            <Save className="w-4 h-4" />
-            บันทึกใบชั่ง
           </button>
         </div>
       </div>
@@ -208,7 +231,16 @@ const Weigh = () => {
                 <select 
                   className="w-full bg-[#141414] border border-neutral-800 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-brand-light transition-all cursor-pointer"
                   value={vehicleId} 
-                  onChange={e => setVehicleId(e.target.value)}
+                  onChange={e => {
+                    const vId = e.target.value;
+                    setVehicleId(vId);
+                    if (vId) {
+                      const selectedVehicle = vehicles.find(v => v.id.toString() === vId);
+                      if (selectedVehicle && selectedVehicle.tareWeightKg) {
+                        setTare(Number(selectedVehicle.tareWeightKg));
+                      }
+                    }
+                  }}
                 >
                   <option value="">ไม่ระบุ / อื่นๆ</option>
                   {vehicles.map(v => (
@@ -244,10 +276,20 @@ const Weigh = () => {
               </div>
               <div className="space-y-2">
                 <label className="text-xs font-medium text-neutral-500 uppercase tracking-wider flex items-center gap-1.5">
-                  ราคาฐาน (เกรด A)
+                  ราคารับซื้อ (เกรด {grade})
                 </label>
-                <div className="bg-brand-light/5 border border-brand-light/20 text-brand-light rounded-xl px-4 py-3 font-bold text-lg">
-                  {todayPrice ? `${Number(todayPrice.priceGradeA).toFixed(2)} ฿/กก.` : '...'}
+                <div className="relative">
+                  <input 
+                    type="number" 
+                    step="0.01"
+                    className="w-full bg-brand-light/5 border border-brand-light/20 text-brand-light rounded-xl px-4 py-3 font-bold text-lg focus:outline-none focus:border-brand-light transition-all"
+                    value={unitPrice || ''}
+                    onChange={e => {
+                      setUnitPrice(parseFloat(e.target.value) || 0);
+                      setIsManualPrice(true);
+                    }}
+                  />
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 text-brand-light/50 text-xs font-bold">฿/กก.</div>
                 </div>
               </div>
             </div>
@@ -287,7 +329,7 @@ const Weigh = () => {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-xs font-medium text-neutral-500 uppercase tracking-wider">น้ำหนักรถ (กก.)</label>
+                <label className="text-xs font-medium text-neutral-500 uppercase tracking-wider">น้ำหนักมาตรฐาน (น้ำหนักรถ) (กก.)</label>
                 <input 
                   type="number" 
                   placeholder="0.00"
@@ -381,7 +423,7 @@ const Weigh = () => {
                 </div>
                 <div className="mt-4 pt-4 border-t border-neutral-800 flex justify-between items-center text-sm">
                   <span className="text-neutral-400 italic">ราคาเกรด {grade}</span>
-                  <span className="text-brand-light font-bold">× {Number(currentPrice || 0).toFixed(2)} ฿</span>
+                  <span className="text-brand-light font-bold">× {Number(unitPrice || 0).toFixed(2)} ฿</span>
                 </div>
               </div>
 
@@ -389,12 +431,22 @@ const Weigh = () => {
                 <div className="text-neutral-500 text-xs font-bold uppercase tracking-widest mb-2 text-center">ยอดเงินสุทธิที่ต้องจ่าย</div>
                 <div className="relative group text-center">
                   <div className="absolute inset-0 bg-brand-light blur-2xl opacity-10 group-hover:opacity-20 transition-opacity"></div>
-                  <div className="relative text-5xl font-black text-brand-light tracking-tighter drop-shadow-sm">
-                    ฿{Number(total || 0).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  <div className="relative">
+                    <input 
+                      type="number" 
+                      step="0.01"
+                      className="w-full bg-transparent text-5xl font-black text-brand-light tracking-tighter drop-shadow-sm text-center focus:outline-none"
+                      value={totalAmount || ''}
+                      onChange={e => {
+                        setTotalAmount(parseFloat(e.target.value) || 0);
+                        setIsManualTotal(true);
+                      }}
+                    />
+                    <div className="text-[10px] text-brand-light/40 uppercase font-bold mt-1">บาท (สามารถแก้ไขยอดเงินได้)</div>
                   </div>
                 </div>
                 
-                <div className="mt-10 space-y-3">
+                <div className="mt-14 space-y-3">
                   <div className="flex items-center gap-2 text-xs text-neutral-500">
                     <CheckCircle className="w-3 h-3 text-brand-light" />
                     <span>ตรวจสอบความถูกต้องของรหัสเกษตรกร</span>
@@ -403,20 +455,61 @@ const Weigh = () => {
                     <CheckCircle className="w-3 h-3 text-brand-light" />
                     <span>คำนวณตามเกรด {grade} (%FFA {Number(ffa || 0).toFixed(1)})</span>
                   </div>
-                  {total > 100000 && (
+                  {totalAmount > 100000 && (
                     <div className="flex items-center gap-2 text-xs text-yellow-500 bg-yellow-500/5 p-2 rounded-xl border border-yellow-500/20">
                       <AlertCircle className="w-3 h-3" />
                       <span>รายการมูลค่าสูง (เกิน 1 แสนบาท)</span>
                     </div>
                   )}
                 </div>
-              </div>
-            </div>
-          </div>
+
+                <button 
+                  onClick={handleSubmit}
+                  disabled={saving}
+                  className={`w-full py-5 rounded-2xl font-black text-xl flex items-center justify-center gap-3 transition-all active:scale-[0.98] shadow-2xl mt-12 ${
+                    saving 
+                      ? 'bg-neutral-800 text-neutral-500 cursor-not-allowed' 
+                      : 'bg-brand-light text-black hover:bg-white'
+                  }`}
+                >
+                  {saving ? (
+                    <>
+                      <Loader2 className="w-6 h-6 animate-spin" />
+                      <span>กำลังบันทึก...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-6 h-6" />
+                      <span>บันทึกใบชั่ง</span>
+                    </>
+                  )}
+                </button>
         </div>
       </div>
     </div>
-  );
+  </div>
+      {/* Success Modal */}
+      {showSuccess && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm"></div>
+          <div className="relative bg-[#1e1e1e] border border-neutral-800 rounded-3xl p-8 max-w-sm w-full shadow-2xl text-center scale-in duration-300">
+            <div className="w-20 h-20 bg-brand-light/10 text-brand-light rounded-full flex items-center justify-center mx-auto mb-6">
+              <CheckCircle className="w-12 h-12" />
+            </div>
+            <h3 className="text-2xl font-black text-white mb-2">บันทึกสำเร็จ</h3>
+            <p className="text-neutral-400 text-sm mb-8">ข้อมูลใบชั่งได้ถูกบันทึกลงในระบบเรียบร้อยแล้ว</p>
+            <button 
+              onClick={() => window.location.reload()}
+              className="w-full py-4 bg-brand-light hover:bg-white text-black font-black rounded-2xl transition-all active:scale-[0.98] shadow-lg shadow-brand-light/10"
+            >
+              ตกลง
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  </div>
+);
 };
 
 export default Weigh;

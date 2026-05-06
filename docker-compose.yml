@@ -35,6 +35,8 @@ services:
       - DATABASE_URL=postgresql://${DB_USER:-palm_admin}:${DB_PASSWORD:-palm_pass}@db:5432/${DB_NAME:-palm_ops_db}?schema=public
       - JWT_SECRET=${JWT_SECRET:-palmops_secret_key_2026}
       - PORT=5001
+      - NODE_ENV=development
+
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5001/api/health"]
       interval: 10s
@@ -43,6 +45,10 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    command: npm run dev
 
   # Frontend Service (React/Vite/Nginx)
   frontend:
@@ -56,6 +62,10 @@ services:
     depends_on:
       backend:
         condition: service_healthy
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/dist
 
 volumes:
   postgres_data:

@@ -1,9 +1,10 @@
 import { Request, Response } from 'express';
-import prisma from '../config/prisma';
+// ลบการ import prisma แบบ global ออก
+
 
 export const getProductGroups = async (req: Request, res: Response) => {
   try {
-    const groups = await prisma.productGroup.findMany({
+    const groups = await req.db.productGroup.findMany({
       include: { products: true }
     });
     res.json(groups);
@@ -18,7 +19,7 @@ export const getProducts = async (req: Request, res: Response) => {
     const where: any = {};
     if (groupId) where.groupId = parseInt(groupId as string);
 
-    const products = await prisma.product.findMany({
+    const products = await req.db.product.findMany({
       where,
       include: { group: true }
     });
@@ -31,7 +32,7 @@ export const getProducts = async (req: Request, res: Response) => {
 export const createProductGroup = async (req: Request, res: Response) => {
   try {
     const { name, note } = req.body;
-    const group = await prisma.productGroup.create({
+    const group = await req.db.productGroup.create({
       data: { name, note }
     });
     res.status(201).json(group);
@@ -43,7 +44,7 @@ export const createProductGroup = async (req: Request, res: Response) => {
 export const createProduct = async (req: Request, res: Response) => {
   try {
     const { name, unit, groupId } = req.body;
-    const product = await prisma.product.create({
+    const product = await req.db.product.create({
       data: { 
         name, 
         unit, 
@@ -66,7 +67,7 @@ export const deleteProduct = async (req: Request, res: Response) => {
     }
 
     // Check if product exists
-    const product = await prisma.product.findUnique({
+    const product = await req.db.product.findUnique({
       where: { id: parseInt(id as string) }
     });
 
@@ -75,7 +76,7 @@ export const deleteProduct = async (req: Request, res: Response) => {
     }
 
     // Check if product has expenses
-    const productWithExpenses = await prisma.product.findUnique({
+    const productWithExpenses = await req.db.product.findUnique({
       where: { id: parseInt(id as string) },
       include: { _count: { select: { expenses: true } } }
     });
@@ -84,7 +85,7 @@ export const deleteProduct = async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'ไม่สามารถลบได้เนื่องจากมีการใช้งานในรายการค่าใช้จ่ายแล้ว' });
     }
 
-    await prisma.product.delete({
+    await req.db.product.delete({
       where: { id: parseInt(id as string) }
     });
     res.json({ message: 'ลบสินค้าสำเร็จ' });
@@ -99,7 +100,7 @@ export const deleteProductGroup = async (req: Request, res: Response) => {
     const { id } = req.params;
 
     // Check if group has products
-    const groupWithProducts = await prisma.productGroup.findUnique({
+    const groupWithProducts = await req.db.productGroup.findUnique({
       where: { id: parseInt(id as string) },
       include: { _count: { select: { products: true } } }
     });
@@ -108,7 +109,7 @@ export const deleteProductGroup = async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'ไม่สามารถลบกลุ่มได้เนื่องจากมีสินค้าภายในกลุ่ม' });
     }
 
-    await prisma.productGroup.delete({
+    await req.db.productGroup.delete({
       where: { id: parseInt(id as string) }
     });
     res.json({ message: 'ลบกลุ่มสินค้าสำเร็จ' });

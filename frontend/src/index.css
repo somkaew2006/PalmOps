@@ -17,6 +17,21 @@
   --font-heading: 'Outfit', sans-serif;
 }
 
+/* Global Interactive Styles */
+button, 
+select,
+option,
+[role="button"],
+.btn,
+.cursor-pointer {
+  cursor: pointer !important;
+}
+
+button:disabled,
+select:disabled {
+  cursor: not-allowed !important;
+}
+
 body {
   font-family: var(--font-sans);
   background-color: var(--color-bg-main);
@@ -26,6 +41,17 @@ body {
 
 h1, h2, h3, h4, h5, h6, .font-heading {
   font-family: var(--font-heading);
+}
+
+/* Hide Number Input Spinners */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type=number] {
+  -moz-appearance: textfield;
 }
 
 /* Premium Badges */
@@ -166,4 +192,13 @@ tr:hover td {
 
 .print-only {
   display: none;
+}
+
+@keyframes scale-in {
+  0% { transform: scale(0.9); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.scale-in {
+  animation: scale-in 0.3s ease-out forwards;
 }

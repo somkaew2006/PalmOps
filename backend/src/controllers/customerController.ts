@@ -1,9 +1,10 @@
 import { Request, Response } from 'express';
-import prisma from '../config/prisma';
+// ลบการ import prisma แบบ global ออก
+
 
 export const getCustomers = async (req: Request, res: Response) => {
   try {
-    const customers = await prisma.customer.findMany({
+    const customers = await req.db.customer.findMany({
       orderBy: { name: 'asc' }
     });
     res.json(customers);
@@ -15,7 +16,7 @@ export const getCustomers = async (req: Request, res: Response) => {
 export const createCustomer = async (req: Request, res: Response) => {
   try {
     const { name, phone, address, note } = req.body;
-    const customer = await prisma.customer.create({
+    const customer = await req.db.customer.create({
       data: { name, phone, address, note }
     });
     res.status(201).json(customer);
@@ -26,9 +27,9 @@ export const createCustomer = async (req: Request, res: Response) => {
 
 export const updateCustomer = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const { name, phone, address, note, isActive } = req.body;
-    const customer = await prisma.customer.update({
+    const customer = await req.db.customer.update({
       where: { id: parseInt(id) },
       data: { name, phone, address, note, isActive }
     });
@@ -40,10 +41,10 @@ export const updateCustomer = async (req: Request, res: Response) => {
 
 export const deleteCustomer = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     
     // Check if customer has sales
-    const customerWithSales = await prisma.customer.findUnique({
+    const customerWithSales = await req.db.customer.findUnique({
       where: { id: parseInt(id) },
       include: { _count: { select: { sales: true } } }
     });
@@ -52,7 +53,7 @@ export const deleteCustomer = async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'ไม่สามารถลบได้เนื่องจากมีการใช้งานในรายการขายแล้ว' });
     }
 
-    await prisma.customer.delete({
+    await req.db.customer.delete({
       where: { id: parseInt(id) }
     });
     res.json({ message: 'ลบข้อมูลลูกค้าสำเร็จ' });

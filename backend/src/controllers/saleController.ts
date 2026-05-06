@@ -1,12 +1,35 @@
 import { Request, Response } from 'express';
-import prisma from '../config/prisma';
+
 
 export const getSales = async (req: Request, res: Response) => {
   try {
-    const sales = await prisma.sale.findMany({
+    const { branchId, month, year, isTransfer } = req.query;
+    const where: any = {};
+    
+    if (branchId) {
+      where.branchId = parseInt(branchId as string);
+    }
+
+    if (isTransfer === 'true') {
+      where.toBranchId = { not: null };
+    } else if (isTransfer === 'false') {
+      where.toBranchId = null;
+    }
+    
+    if (month && year) {
+      const m = parseInt(month as string);
+      const y = parseInt(year as string);
+      const startDate = new Date(y, m - 1, 1);
+      const endDate = new Date(y, m, 0, 23, 59, 59, 999);
+      where.saleDate = { gte: startDate, lte: endDate };
+    }
+
+    const sales = await req.db.sale.findMany({
+      where,
       include: { 
         branch: true,
-        customer: true
+        customer: true,
+        toBranch: true
       },
       orderBy: { saleDate: 'desc' }
     });
@@ -19,17 +42,18 @@ export const getSales = async (req: Request, res: Response) => {
 export const createSale = async (req: Request, res: Response) => {
   try {
     const { 
-      branchId, customerId, customerName, saleDate, grade, 
+      branchId, customerId, customerName, toBranchId, saleDate, grade, 
       quantityKg, pricePerKg, totalAmount, note 
     } = req.body;
 
     const branchIdInt = parseInt(branchId);
     const qty = parseFloat(quantityKg);
 
-    // Check if enough stock
-    const stock = await prisma.stock.findUnique({
+    // Check if enough stock in source branch
+    const stock = await req.db.stock.findUnique({
       where: {
-        branchId_grade: {
+        companyId_branchId_grade: {
+          companyId: req.companyId!,
           branchId: branchIdInt,
           grade: grade
         }
@@ -40,8 +64,8 @@ export const createSale = async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'สินค้าในสต็อกไม่เพียงพอ' });
     }
 
-    // Use transaction to create sale and deduct stock
-    const result = await prisma.$transaction(async (tx) => {
+    // Use transaction to create sale and update stocks
+    const result = await req.db.$transaction(async (tx) => {
       // Generate sale number
       const dateStr = new Date().toISOString().slice(2, 10).replace(/-/g, '');
       const saleCount = await tx.sale.count();
@@ -51,8 +75,9 @@ export const createSale = async (req: Request, res: Response) => {
         data: {
           saleNo,
           branchId: branchIdInt,
-          customerId: customerId && customerId !== 'other' ? parseInt(customerId) : null,
-          customerName,
+          customerId: customerId && customerId !== 'other' && customerId !== 'branch' ? parseInt(customerId) : null,
+          customerName: customerId === 'branch' ? `โอนย้ายไปสาขา ${req.body.toBranchName}` : customerName,
+          toBranchId: toBranchId ? parseInt(toBranchId) : null,
           saleDate: saleDate ? new Date(saleDate) : new Date(),
           grade,
           quantityKg: qty,
@@ -63,10 +88,11 @@ export const createSale = async (req: Request, res: Response) => {
         }
       });
 
-      // Deduct stock
+      // 1. Deduct stock from source branch
       await tx.stock.update({
         where: {
-          branchId_grade: {
+          companyId_branchId_grade: {
+            companyId: req.companyId!,
             branchId: branchIdInt,
             grade: grade
           }
@@ -75,6 +101,31 @@ export const createSale = async (req: Request, res: Response) => {
           quantityKg: { decrement: qty }
         }
       });
+
+      // 2. If it's a transfer to another branch, increment stock in the target branch
+      if (toBranchId) {
+        const targetBranchId = parseInt(toBranchId);
+
+        // Update stock in target branch
+        await tx.stock.upsert({
+          where: {
+            companyId_branchId_grade: {
+              companyId: req.companyId!,
+              branchId: targetBranchId,
+              grade: grade
+            }
+          },
+          update: {
+            quantityKg: { increment: qty }
+          },
+          create: {
+            companyId: req.companyId!,
+            branchId: targetBranchId,
+            grade: grade,
+            quantityKg: qty
+          }
+        });
+      }
 
       return sale;
     });
@@ -91,21 +142,22 @@ export const cancelSale = async (req: Request, res: Response) => {
     const idStr = req.params.id as string;
     const id = parseInt(idStr);
     
-    const sale = await prisma.sale.findUnique({ where: { id } });
+    const sale = await req.db.sale.findUnique({ where: { id } });
     if (!sale) return res.status(404).json({ message: 'ไม่พบรายการขาย' });
     if (sale.status === 'cancelled') return res.status(400).json({ message: 'รายการนี้ถูกยกเลิกไปแล้ว' });
 
-    // Transaction to cancel sale and restore stock
-    const result = await prisma.$transaction(async (tx) => {
+    // Transaction to cancel sale and restore stocks
+    const result = await req.db.$transaction(async (tx) => {
       const updatedSale = await tx.sale.update({
         where: { id },
         data: { status: 'cancelled' }
       });
 
-      // Restore stock
+      // 1. Restore stock to source branch
       await tx.stock.update({
         where: {
-          branchId_grade: {
+          companyId_branchId_grade: {
+            companyId: req.companyId!,
             branchId: sale.branchId,
             grade: sale.grade
           }
@@ -114,6 +166,21 @@ export const cancelSale = async (req: Request, res: Response) => {
           quantityKg: { increment: sale.quantityKg }
         }
       });
+
+      if (sale.toBranchId) {
+        await tx.stock.update({
+          where: {
+            companyId_branchId_grade: {
+              companyId: req.companyId!,
+              branchId: sale.toBranchId,
+              grade: sale.grade
+            }
+          },
+          data: {
+            quantityKg: { decrement: sale.quantityKg }
+          }
+        });
+      }
 
       return updatedSale;
     });

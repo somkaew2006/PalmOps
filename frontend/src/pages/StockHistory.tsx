@@ -26,6 +26,8 @@ const StockHistory = () => {
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 15;
 
   useEffect(() => {
     const fetchBranches = async () => {
@@ -41,6 +43,7 @@ const StockHistory = () => {
 
   useEffect(() => {
     fetchHistory();
+    setCurrentPage(1); // Reset to page 1 when filters change
   }, [selectedBranchId, selectedGrade, selectedMonth, selectedYear]);
 
   const fetchHistory = async () => {
@@ -62,6 +65,11 @@ const StockHistory = () => {
     item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.branchName.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredHistory.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredHistory.length / itemsPerPage);
 
   const handleExportExcel = () => {
     const data = filteredHistory.map(item => ({
@@ -98,6 +106,43 @@ const StockHistory = () => {
         >
           <FileDown size={18} /> Export Excel
         </button>
+      </div>
+
+      {/* Stock Summary by Branch */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+        {branches.map(branch => {
+          const gradeStock = branch.stocks?.find((s: any) => s.grade === selectedGrade);
+          const quantity = Number(gradeStock?.quantityKg || 0);
+          return (
+            <div 
+              key={branch.id} 
+              className={`p-3 rounded-2xl border transition-all duration-300 ${
+                selectedBranchId === branch.id.toString() || selectedBranchId === 'all'
+                  ? 'bg-brand-light/10 border-brand-light/30 ring-1 ring-brand-light/20' 
+                  : 'bg-white/5 border-white/5 opacity-50'
+              }`}
+            >
+              <div className="text-[10px] font-black text-neutral-500 uppercase tracking-tighter mb-1 truncate">
+                {branch.branchName}
+              </div>
+              <div className="flex items-baseline gap-1">
+                <span className="text-lg font-black text-white">{quantity.toLocaleString()}</span>
+                <span className="text-[10px] text-neutral-500 font-bold">กก.</span>
+              </div>
+            </div>
+          );
+        })}
+        {selectedBranchId === 'all' && (
+          <div className="p-3 rounded-2xl bg-white/[0.02] border border-white/5 flex flex-col justify-center">
+            <div className="text-[10px] font-black text-brand-light uppercase tracking-tighter mb-1">ยอดรวมทุกสาขา</div>
+            <div className="flex items-baseline gap-1">
+              <span className="text-lg font-black text-brand-light">
+                {branches.reduce((acc, b) => acc + Number(b.stocks?.find((s: any) => s.grade === selectedGrade)?.quantityKg || 0), 0).toLocaleString()}
+              </span>
+              <span className="text-[10px] text-brand-light/60 font-bold">กก.</span>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Filters */}
@@ -205,8 +250,8 @@ const StockHistory = () => {
             <tbody className="divide-y divide-white/5">
               {loading ? (
                 <tr><td colSpan={7} className="text-center py-20 text-neutral-500 animate-pulse font-bold">กำลังประมวลผลสต็อก...</td></tr>
-              ) : filteredHistory.length > 0 ? (
-                filteredHistory.map((item: any) => (
+              ) : currentItems.length > 0 ? (
+                currentItems.map((item: any) => (
                   <tr key={item.id} className={`hover:bg-white/[0.02] transition-colors ${item.status === 'cancelled' ? 'opacity-30 grayscale' : ''}`}>
                     <td className="px-6 py-4">
                       <div className="text-[13px] font-bold text-white">
@@ -253,6 +298,46 @@ const StockHistory = () => {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination Controls */}
+        {!loading && totalPages > 1 && (
+          <div className="px-6 py-4 bg-black/20 border-t border-white/5 flex items-center justify-between">
+            <div className="text-xs text-neutral-500">
+              แสดง {indexOfFirstItem + 1} ถึง {Math.min(indexOfLastItem, filteredHistory.length)} จากทั้งหมด {filteredHistory.length} รายการ
+            </div>
+            <div className="flex gap-2">
+              <button 
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+                className="px-4 py-2 bg-neutral-900 border border-white/10 rounded-xl text-xs text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-neutral-800 transition-colors"
+              >
+                ก่อนหน้า
+              </button>
+              <div className="flex gap-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    className={`w-8 h-8 rounded-xl text-xs font-bold transition-all ${
+                      currentPage === page 
+                        ? 'bg-brand-light text-black shadow-lg shadow-brand-light/20' 
+                        : 'bg-neutral-900 text-neutral-400 hover:text-white border border-white/5'
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+              </div>
+              <button 
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages}
+                className="px-4 py-2 bg-neutral-900 border border-white/10 rounded-xl text-xs text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-neutral-800 transition-colors"
+              >
+                ถัดไป
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,11 +1,12 @@
 import { Request, Response } from 'express';
-import prisma from '../config/prisma';
+// ลบการ import prisma แบบ global ออก
+
 
 console.log('!!! FARMER CONTROLLER LOADED !!!');
 
 export const getFarmers = async (req: Request, res: Response) => {
   try {
-    const farmers = await prisma.farmer.findMany({
+    const farmers = await req.db.farmer.findMany({
       include: {
         _count: {
           select: { farmPlots: true }
@@ -22,7 +23,7 @@ export const getFarmers = async (req: Request, res: Response) => {
 export const getFarmer = async (req: Request, res: Response) => {
   try {
     const id = req.params.id as string;
-    const farmer = await prisma.farmer.findUnique({
+    const farmer = await req.db.farmer.findUnique({
       where: { id: parseInt(id) },
       include: { farmPlots: true }
     });
@@ -54,7 +55,7 @@ export const createFarmer = async (req: Request, res: Response) => {
     };
 
     if (nationalId) {
-      const existing = await prisma.farmer.findUnique({ where: { nationalId } });
+      const existing = await req.db.farmer.findUnique({ where: { nationalId } });
       if (existing) return res.status(400).json({ message: 'เลขบัตรประชาชนนี้มีอยู่ในระบบแล้ว' });
       createData.nationalId = nationalId;
     }
@@ -79,7 +80,7 @@ export const createFarmer = async (req: Request, res: Response) => {
 
     console.log('Sending to Prisma (Create):', JSON.stringify(createData, null, 2));
 
-    const farmer = await prisma.farmer.create({
+    const farmer = await req.db.farmer.create({
       data: createData,
       include: { farmPlots: true }
     });
@@ -116,7 +117,7 @@ export const updateFarmer = async (req: Request, res: Response) => {
 
     if (Array.isArray(farmPlots)) {
       // Step 1: Remove existing plots to simplify the update structure
-      await prisma.farmPlot.deleteMany({
+      await req.db.farmPlot.deleteMany({
         where: { farmerId: fId }
       });
 
@@ -138,7 +139,7 @@ export const updateFarmer = async (req: Request, res: Response) => {
 
     console.log('Sending to Prisma (Update):', JSON.stringify(updateData, null, 2));
 
-    const farmer = await prisma.farmer.update({
+    const farmer = await req.db.farmer.update({
       where: { id: fId },
       data: updateData,
       include: { farmPlots: true }
@@ -154,7 +155,7 @@ export const updateFarmer = async (req: Request, res: Response) => {
 export const deleteFarmer = async (req: Request, res: Response) => {
   try {
     const id = req.params.id as string;
-    await prisma.farmer.delete({ where: { id: parseInt(id) } });
+    await req.db.farmer.delete({ where: { id: parseInt(id) } });
     res.json({ message: 'Farmer deleted successfully' });
   } catch (error: any) {
     res.status(500).json({ message: error.message });

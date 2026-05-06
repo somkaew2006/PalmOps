@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../api/axios';
+import { useNotification } from '../context/NotificationContext';
 import Select from 'react-select';
 import provincesData from '../data/provinces.json';
 import fullGeography from '../data/geography.json';
@@ -28,6 +29,7 @@ const AddFarmer = () => {
   
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
+  const { showAlert } = useNotification();
   const [isFetching, setIsFetching] = useState(isEdit);
   
   // Form State
@@ -106,7 +108,7 @@ const AddFarmer = () => {
       });
     } catch (error) {
       console.error('Error fetching farmer:', error);
-      alert('ไม่สามารถดึงข้อมูลเกษตรกรได้');
+      showAlert('ไม่สามารถดึงข้อมูลเกษตรกรได้', 'error');
     } finally {
       setIsFetching(false);
     }
@@ -189,19 +191,19 @@ const AddFarmer = () => {
 
       if (isEdit) {
         await api.put(`/farmers/${id}`, payload);
-        alert('แก้ไขข้อมูลเรียบร้อยแล้ว');
+        showAlert('แก้ไขข้อมูลเรียบร้อยแล้ว', 'success');
       } else {
         // Only generate farmerCode for new farmers
         const farmerCode = `F${Date.now().toString().slice(-6)}`;
         await api.post('/farmers', { ...payload, farmerCode });
-        alert('บันทึกเกษตรกรเรียบร้อยแล้ว');
+        showAlert('บันทึกเกษตรกรเรียบร้อยแล้ว', 'success');
       }
       
       navigate('/farmers');
     } catch (error: any) {
       console.error('Error saving farmer:', error);
       const msg = error.response?.data?.message || 'เกิดข้อผิดพลาดในการบันทึก';
-      alert(`ไม่สามารถบันทึกได้: ${msg}`);
+      showAlert(`ไม่สามารถบันทึกได้: ${msg}`, 'error');
     } finally {
       setIsLoading(false);
     }

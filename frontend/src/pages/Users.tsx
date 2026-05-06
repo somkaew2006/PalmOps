@@ -1,44 +1,45 @@
 import React, { useEffect, useState } from 'react';
 import api from '../api/axios';
-import { User, Plus, Search, Trash2, Edit2, Save, X, Phone, MapPin } from 'lucide-react';
+import { UserPlus, Search, Trash2, Edit2, Save, X, Shield, CheckCircle, XCircle } from 'lucide-react';
 import { useNotification } from '../context/NotificationContext';
 
-interface Customer {
+interface User {
   id: number;
-  name: string;
-  phone: string | null;
-  address: string | null;
-  note: string | null;
+  username: string;
+  fullName: string;
+  role: string;
   isActive: boolean;
+  createdAt: string;
 }
 
-const Customers = () => {
-  const [customers, setCustomers] = useState<Customer[]>([]);
+const Users = () => {
+  const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const { showAlert, showConfirm } = useNotification();
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
-  const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
   const [formData, setFormData] = useState({
-    name: '',
-    phone: '',
-    address: '',
-    note: ''
+    username: '',
+    password: '',
+    fullName: '',
+    role: 'weigher',
+    isActive: true
   });
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 15;
 
   useEffect(() => {
-    fetchCustomers();
+    fetchUsers();
   }, []);
 
-  const fetchCustomers = async () => {
+  const fetchUsers = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/customers');
-      setCustomers(response.data);
+      const response = await api.get('/users');
+      setUsers(response.data);
     } catch (error) {
-      console.error('Error fetching customers:', error);
+      console.error('Error fetching users:', error);
     } finally {
       setLoading(false);
     }
@@ -47,53 +48,62 @@ const Customers = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      if (editingCustomer) {
-        await api.put(`/customers/${editingCustomer.id}`, formData);
+      if (editingUser) {
+        // password is optional on edit
+        const payload = { ...formData };
+        if (!payload.password) delete (payload as any).password;
+        await api.put(`/users/${editingUser.id}`, payload);
       } else {
-        await api.post('/customers', formData);
+        if (!formData.password) {
+          showAlert('กรุณาระบุรหัสผ่านสำหรับผู้ใช้ใหม่', 'warning');
+          return;
+        }
+        await api.post('/users', formData);
       }
       setShowModal(false);
-      setEditingCustomer(null);
-      setFormData({ name: '', phone: '', address: '', note: '' });
-      setFormData({ name: '', phone: '', address: '', note: '' });
-      fetchCustomers();
-      showAlert('บันทึกข้อมูลลูกค้าสำเร็จ', 'success');
+      setEditingUser(null);
+      setFormData({ username: '', password: '', fullName: '', role: 'weigher', isActive: true });
+
+      fetchUsers();
+      showAlert('บันทึกข้อมูลสำเร็จ', 'success');
     } catch (error: any) {
       showAlert(error.response?.data?.message || 'เกิดข้อผิดพลาดในการบันทึก', 'error');
     }
   };
 
-  const handleEdit = (customer: Customer) => {
-    setEditingCustomer(customer);
+  const handleEdit = (user: User) => {
+    setEditingUser(user);
     setFormData({
-      name: customer.name,
-      phone: customer.phone || '',
-      address: customer.address || '',
-      note: customer.note || ''
+      username: user.username,
+      password: '', // password field empty on edit unless user wants to change it
+      fullName: user.fullName,
+      role: user.role,
+      isActive: user.isActive
     });
     setShowModal(true);
   };
 
   const handleDelete = async (id: number, name: string) => {
-    showConfirm(`ยืนยันการลบข้อมูลลูกค้า "${name}"?`, async () => {
+    showConfirm(`ยืนยันการลบผู้ใช้งาน "${name}"?`, async () => {
       try {
-        await api.delete(`/customers/${id}`);
-        showAlert('ลบข้อมูลลูกค้าสำเร็จ', 'success');
-        fetchCustomers();
+        await api.delete(`/users/${id}`);
+        showAlert('ลบผู้ใช้งานสำเร็จ', 'success');
+        fetchUsers();
       } catch (error: any) {
         showAlert(error.response?.data?.message || 'เกิดข้อผิดพลาดในการลบ', 'error');
       }
     });
   };
 
-  const filteredCustomers = customers.filter(c => 
-    c.name.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredUsers = users.filter(u => 
+    u.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    u.username.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = filteredCustomers.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(filteredCustomers.length / itemsPerPage);
+  const currentItems = filteredUsers.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -104,19 +114,20 @@ const Customers = () => {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-xl font-bold text-white flex items-center gap-2">
-            <User className="text-brand-light" /> จัดการข้อมูลลูกค้าและโรงงาน
+            <Shield className="text-brand-light" /> จัดการผู้ใช้งาน
           </h2>
-          <p className="text-sm text-neutral-400">กำหนดรายชื่อลูกค้าและโรงงานปลายทางสำหรับการขายสินค้าออก</p>
+          <p className="text-sm text-neutral-400">เพิ่ม แก้ไข หรือระงับสิทธิ์การใช้งานของพนักงานในบริษัท</p>
         </div>
         <button 
           onClick={() => {
-            setEditingCustomer(null);
-            setFormData({ name: '', phone: '', address: '', note: '' });
+            setEditingUser(null);
+            setFormData({ username: '', password: '', fullName: '', role: 'weigher', isActive: true });
+
             setShowModal(true);
           }}
           className="btn btn-primary flex items-center gap-2"
         >
-          <Plus size={18} /> เพิ่มลูกค้าใหม่
+          <UserPlus size={18} /> เพิ่มผู้ใช้ใหม่
         </button>
       </div>
 
@@ -125,7 +136,7 @@ const Customers = () => {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500" size={18} />
           <input 
             type="text" 
-            placeholder="ค้นหาชื่อลูกค้า หรือ โรงงาน..." 
+            placeholder="ค้นหาชื่อผู้ใช้ หรือ ชื่อ-นามสกุล..." 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 bg-neutral-900 border border-neutral-800 rounded-xl text-white focus:border-brand-light focus:outline-none transition-all"
@@ -135,51 +146,52 @@ const Customers = () => {
 
       <div className="table-wrap">
         {loading ? (
-          <div className="p-12 text-center text-neutral-500">กำลังโหลดข้อมูลลูกค้า...</div>
+          <div className="p-12 text-center text-neutral-500">กำลังโหลดข้อมูลผู้ใช้งาน...</div>
         ) : (
           <table>
             <thead>
               <tr>
-                <th>ชื่อลูกค้า / โรงงานปลายทาง</th>
-                <th>เบอร์โทรศัพท์</th>
-                <th>ที่อยู่ / หมายเหตุ</th>
+                <th>ชื่อผู้ใช้ (Username)</th>
+                <th>ชื่อ-นามสกุล</th>
+                <th>บทบาท</th>
                 <th className="text-center">สถานะ</th>
                 <th className="text-right">จัดการ</th>
               </tr>
             </thead>
             <tbody>
-              {currentItems.length > 0 ? currentItems.map(customer => (
-                <tr key={customer.id}>
+              {currentItems.length > 0 ? currentItems.map(user => (
+                <tr key={user.id}>
                   <td className="px-6 py-4">
-                    <div className="font-bold text-white">{customer.name}</div>
+                    <div className="font-bold text-white">@{user.username}</div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="flex items-center gap-2 text-neutral-400">
-                      <Phone size={14} /> {customer.phone || '-'}
-                    </div>
+                    <div className="text-neutral-300">{user.fullName}</div>
                   </td>
-                  <td className="px-6 py-4 max-w-xs">
-                    <div className="flex items-start gap-2 text-neutral-400 text-xs">
-                      <MapPin size={14} className="mt-0.5 shrink-0" />
-                      <span className="truncate">{customer.address || customer.note || '-'}</span>
-                    </div>
+                  <td className="px-6 py-4">
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${user.role === 'admin' ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30' : 'bg-blue-500/20 text-blue-400 border border-blue-500/30'}`}>
+                      {user.role}
+                    </span>
                   </td>
                   <td className="px-6 py-4 text-center">
-                    <span className={`badge ${customer.isActive ? 'badge-green' : 'badge-gray'}`}>
-                      {customer.isActive ? 'เปิดใช้งาน' : 'ปิดใช้งาน'}
-                    </span>
+                    <div className="flex justify-center">
+                      {user.isActive ? (
+                        <CheckCircle size={18} className="text-brand-green" />
+                      ) : (
+                        <XCircle size={18} className="text-red-500" />
+                      )}
+                    </div>
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end gap-2">
                       <button 
-                        onClick={() => handleEdit(customer)}
+                        onClick={() => handleEdit(user)}
                         className="p-2 text-neutral-400 hover:text-brand-light hover:bg-brand-light/10 rounded-lg transition-all"
                         title="แก้ไข"
                       >
                         <Edit2 size={16} />
                       </button>
                       <button 
-                        onClick={() => handleDelete(customer.id, customer.name)}
+                        onClick={() => handleDelete(user.id, user.fullName)}
                         className="p-2 text-neutral-400 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
                         title="ลบ"
                       >
@@ -190,7 +202,7 @@ const Customers = () => {
                 </tr>
               )) : (
                 <tr>
-                  <td colSpan={5} className="text-center py-12 text-neutral-500 italic">ไม่พบข้อมูลลูกค้า</td>
+                  <td colSpan={5} className="text-center py-12 text-neutral-500 italic">ไม่พบข้อมูลผู้ใช้งาน</td>
                 </tr>
               )}
             </tbody>
@@ -201,7 +213,7 @@ const Customers = () => {
         {!loading && totalPages > 1 && (
           <div className="px-6 py-4 bg-black/20 border-t border-white/5 flex items-center justify-between">
             <div className="text-xs text-neutral-500">
-              แสดง {indexOfFirstItem + 1} ถึง {Math.min(indexOfLastItem, filteredCustomers.length)} จากทั้งหมด {filteredCustomers.length} รายการ
+              แสดง {indexOfFirstItem + 1} ถึง {Math.min(indexOfLastItem, filteredUsers.length)} จากทั้งหมด {filteredUsers.length} รายการ
             </div>
             <div className="flex gap-2">
               <button 
@@ -243,7 +255,7 @@ const Customers = () => {
           <div className="bg-neutral-900 border border-neutral-800 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
             <div className="px-6 py-4 bg-black/20 border-b border-neutral-800 flex justify-between items-center">
               <h3 className="text-lg font-bold text-white">
-                {editingCustomer ? 'แก้ไขข้อมูลลูกค้า' : 'เพิ่มลูกค้าใหม่'}
+                {editingUser ? 'แก้ไขข้อมูลผู้ใช้' : 'เพิ่มผู้ใช้ใหม่'}
               </h3>
               <button onClick={() => setShowModal(false)} className="text-neutral-500 hover:text-white">
                 <X size={20} />
@@ -251,45 +263,65 @@ const Customers = () => {
             </div>
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               <div className="form-group">
-                <label className="block text-sm font-medium text-neutral-400 mb-1">ชื่อลูกค้า / โรงงานปลายทาง *</label>
+                <label className="block text-sm font-medium text-neutral-400 mb-1">ชื่อผู้ใช้ (Username) *</label>
                 <input 
                   type="text" 
                   required
-                  value={formData.name}
-                  onChange={e => setFormData({...formData, name: e.target.value})}
-                  placeholder="เช่น โรงงานไทยปาล์ม"
+                  disabled={!!editingUser}
+                  value={formData.username}
+                  onChange={e => setFormData({...formData, username: e.target.value})}
+                  placeholder="เช่น somchai_p"
+                  className="w-full bg-neutral-800 border border-neutral-700 rounded-xl px-4 py-2.5 text-white focus:border-brand-light focus:outline-none disabled:opacity-50"
+                />
+              </div>
+              <div className="form-group">
+                <label className="block text-sm font-medium text-neutral-400 mb-1">
+                  รหัสผ่าน {editingUser && '(เว้นว่างไว้ถ้าไม่ต้องการเปลี่ยน)'} {!editingUser && '*'}
+                </label>
+                <input 
+                  type="password" 
+                  required={!editingUser}
+                  value={formData.password}
+                  onChange={e => setFormData({...formData, password: e.target.value})}
+                  placeholder="••••••••"
                   className="w-full bg-neutral-800 border border-neutral-700 rounded-xl px-4 py-2.5 text-white focus:border-brand-light focus:outline-none"
                 />
               </div>
               <div className="form-group">
-                <label className="block text-sm font-medium text-neutral-400 mb-1">เบอร์โทรศัพท์</label>
+                <label className="block text-sm font-medium text-neutral-400 mb-1">ชื่อ-นามสกุล *</label>
                 <input 
                   type="text" 
-                  value={formData.phone}
-                  onChange={e => setFormData({...formData, phone: e.target.value})}
-                  placeholder="08X-XXXXXXX"
+                  required
+                  value={formData.fullName}
+                  onChange={e => setFormData({...formData, fullName: e.target.value})}
+                  placeholder="เช่น นายสมชาย ปาล์มดี"
                   className="w-full bg-neutral-800 border border-neutral-700 rounded-xl px-4 py-2.5 text-white focus:border-brand-light focus:outline-none"
                 />
               </div>
-              <div className="form-group">
-                <label className="block text-sm font-medium text-neutral-400 mb-1">ที่อยู่</label>
-                <textarea 
-                  rows={2}
-                  value={formData.address}
-                  onChange={e => setFormData({...formData, address: e.target.value})}
-                  placeholder="รายละเอียดที่อยู่..."
-                  className="w-full bg-neutral-800 border border-neutral-700 rounded-xl px-4 py-2.5 text-white focus:border-brand-light focus:outline-none"
-                />
-              </div>
-              <div className="form-group">
-                <label className="block text-sm font-medium text-neutral-400 mb-1">หมายเหตุ</label>
-                <input 
-                  type="text" 
-                  value={formData.note}
-                  onChange={e => setFormData({...formData, note: e.target.value})}
-                  placeholder="ข้อมูลเพิ่มเติม..."
-                  className="w-full bg-neutral-800 border border-neutral-700 rounded-xl px-4 py-2.5 text-white focus:border-brand-light focus:outline-none"
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="form-group">
+                  <label className="block text-sm font-medium text-neutral-400 mb-1">บทบาท</label>
+                  <select 
+                    value={formData.role}
+                    onChange={e => setFormData({...formData, role: e.target.value})}
+                    className="w-full bg-neutral-800 border border-neutral-700 rounded-xl px-4 py-2.5 text-white focus:border-brand-light focus:outline-none"
+                  >
+                    <option value="weigher">Staff (พนักงานทั่วไป)</option>
+
+                    <option value="admin">Admin (ผู้จัดการ)</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label className="block text-sm font-medium text-neutral-400 mb-1">สถานะ</label>
+                  <select 
+                    value={formData.isActive ? 'true' : 'false'}
+                    onChange={e => setFormData({...formData, isActive: e.target.value === 'true'})}
+                    className="w-full bg-neutral-800 border border-neutral-700 rounded-xl px-4 py-2.5 text-white focus:border-brand-light focus:outline-none"
+                  >
+                    <option value="true">เปิดใช้งาน</option>
+                    <option value="false">ระงับการใช้งาน</option>
+                  </select>
+                </div>
               </div>
               
               <div className="flex gap-3 pt-4">
@@ -315,4 +347,4 @@ const Customers = () => {
   );
 };
 
-export default Customers;
+export default Users;

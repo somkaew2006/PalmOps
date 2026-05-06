@@ -1,9 +1,10 @@
 import { Request, Response } from 'express';
-import prisma from '../config/prisma';
+// ลบการ import prisma แบบ global ออก
+
 
 export const getBranches = async (req: Request, res: Response) => {
   try {
-    const branches = await prisma.branch.findMany({
+    const branches = await req.db.branch.findMany({
       include: {
         stocks: true,
         _count: {
@@ -22,7 +23,7 @@ export const getBranches = async (req: Request, res: Response) => {
 export const getBranch = async (req: Request, res: Response) => {
   try {
     const id = req.params.id as string;
-    const branch = await prisma.branch.findUnique({
+    const branch = await req.db.branch.findUnique({
       where: { id: parseInt(id) },
       include: { stocks: true }
     });
@@ -36,9 +37,9 @@ export const getBranch = async (req: Request, res: Response) => {
 export const createBranch = async (req: Request, res: Response) => {
   try {
     const { branchCode, branchName, address, phone, isActive } = req.body;
-    
+
     // Create branch and initialize stock for grades A, B, C
-    const branch = await prisma.branch.create({
+    const branch = await req.db.branch.create({
       data: {
         branchCode,
         branchName,
@@ -47,11 +48,12 @@ export const createBranch = async (req: Request, res: Response) => {
         isActive: isActive !== false,
         stocks: {
           create: [
-            { grade: 'A', quantityKg: 0 },
-            { grade: 'B', quantityKg: 0 },
-            { grade: 'C', quantityKg: 0 }
+            { companyId: req.companyId!, grade: 'A', quantityKg: 0 },
+            { companyId: req.companyId!, grade: 'B', quantityKg: 0 },
+            { companyId: req.companyId!, grade: 'C', quantityKg: 0 }
           ]
         }
+
       },
       include: { stocks: true }
     });
@@ -65,12 +67,12 @@ export const updateBranch = async (req: Request, res: Response) => {
   try {
     const id = req.params.id as string;
     const { branchCode, branchName, address, phone, isActive } = req.body;
-    
+
     console.log('--- UPDATING BRANCH ---');
     console.log('ID:', id);
     console.log('Body:', req.body);
 
-    const branch = await prisma.branch.update({
+    const branch = await req.db.branch.update({
       where: { id: parseInt(id) },
       data: {
         branchCode,
@@ -92,7 +94,7 @@ export const updateBranch = async (req: Request, res: Response) => {
 export const deleteBranch = async (req: Request, res: Response) => {
   try {
     const id = req.params.id as string;
-    await prisma.branch.delete({ where: { id: parseInt(id) } });
+    await req.db.branch.delete({ where: { id: parseInt(id) } });
     res.json({ message: 'Branch deleted successfully' });
   } catch (error: any) {
     res.status(500).json({ message: error.message });
@@ -102,8 +104,15 @@ export const deleteBranch = async (req: Request, res: Response) => {
 export const getStocks = async (req: Request, res: Response) => {
   try {
     const branchIdStr = req.query.branchId as string;
-    const where = branchIdStr ? { branchId: parseInt(branchIdStr) } : {};
-    const stocks = await prisma.stock.findMany({
+    const grade = req.query.grade as string;
+    const where: any = { companyId: req.companyId! };
+    
+    if (branchIdStr) where.branchId = parseInt(branchIdStr);
+    if (grade) where.grade = grade;
+
+    console.log('[DEBUG] Fetching stocks with where:', where);
+
+    const stocks = await req.db.stock.findMany({
       where,
       include: { branch: true }
     });
@@ -135,10 +144,10 @@ export const getBranchStockHistory = async (req: Request, res: Response) => {
         dateFilter = { lte: endOfYear };
       }
     }
-    
+
     // Fetch tickets (Include all except draft) up to the end of the selected period
-    const tickets = await prisma.weighTicket.findMany({
-      where: { 
+    const tickets = await req.db.weighTicket.findMany({
+      where: {
         ...(branchId ? { branchId } : {}),
         ...(gradeParam ? { grade: gradeParam as any } : {}),
         status: { not: 'draft' },
@@ -148,19 +157,59 @@ export const getBranchStockHistory = async (req: Request, res: Response) => {
       orderBy: { weighInAt: 'asc' }
     });
 
-    // Fetch sales up to the end of the selected period
-    const sales = await prisma.sale.findMany({
-      where: { 
-        ...(branchId ? { branchId } : {}),
+    // Fetch sales up to the end of the selected period (Include both Outgoing and Incoming Transfers)
+    const sales = await req.db.sale.findMany({
+      where: {
+        ...(branchId ? {
+          OR: [
+            { branchId: branchId },
+            { toBranchId: branchId }
+          ]
+        } : {}),
         ...(gradeParam ? { grade: gradeParam as any } : {}),
         ...(yearParam ? { saleDate: dateFilter } : {})
       },
-      include: { branch: true },
+      include: { branch: true, toBranch: true },
       orderBy: { saleDate: 'asc' }
     });
 
     // Merge and sort ASC for calculation
     let runningBalance = 0;
+    
+    // Process Sales into movements (handling transfers that might appear twice if branchId is not specified)
+    const saleMovements: any[] = [];
+    sales.forEach(s => {
+      // 1. If it's an outgoing sale or transfer from the target branch
+      if (!branchId || s.branchId === branchId) {
+        saleMovements.push({
+          id: `s-out-${s.id}`,
+          date: s.saleDate,
+          type: 'OUT',
+          reference: s.saleNo,
+          grade: s.grade,
+          quantity: Number(s.quantityKg),
+          status: s.status,
+          branchName: s.branch.branchName,
+          description: s.toBranchId ? `โอนย้ายไป ${s.toBranch?.branchName}` : 'ขายออก (Stock Out)'
+        });
+      }
+      
+      // 2. If it's an incoming transfer to the target branch
+      if (s.toBranchId && (!branchId || s.toBranchId === branchId)) {
+        saleMovements.push({
+          id: `s-in-${s.id}`,
+          date: s.saleDate,
+          type: 'IN',
+          reference: s.saleNo,
+          grade: s.grade,
+          quantity: Number(s.quantityKg),
+          status: s.status,
+          branchName: s.toBranch?.branchName || 'Unknown',
+          description: `รับโอนจาก ${s.branch.branchName}`
+        });
+      }
+    });
+
     const history = [
       ...tickets.map(t => ({
         id: `t-${t.id}`,
@@ -173,17 +222,7 @@ export const getBranchStockHistory = async (req: Request, res: Response) => {
         branchName: t.branch.branchName,
         description: 'รับซื้อปาล์ม (Stock In)'
       })),
-      ...sales.map(s => ({
-        id: `s-${s.id}`,
-        date: s.saleDate,
-        type: 'OUT',
-        reference: s.saleNo,
-        grade: s.grade,
-        quantity: Number(s.quantityKg),
-        status: s.status,
-        branchName: s.branch.branchName,
-        description: 'ขายออก (Stock Out)'
-      }))
+      ...saleMovements
     ].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
     // Calculate balances
@@ -208,21 +247,21 @@ export const getBranchStockHistory = async (req: Request, res: Response) => {
     if (yearParam) {
       const year = parseInt(yearParam);
       const monthVal = parseInt(monthParam || '0');
-      
+
       console.log(`[FilterDebug] Target Year: ${year}, Target Month: ${monthVal}`);
 
       result = historyWithBalance.filter((item, index) => {
         const d = new Date(item.date);
         const itemYear = d.getFullYear();
         const itemMonth = d.getMonth() + 1; // 1-12
-        
+
         const yearMatch = itemYear === year;
         const monthMatch = monthVal === 0 || itemMonth === monthVal;
-        
+
         if (index < 5) {
           console.log(`[ItemDebug] Date: ${item.date}, ItemMonth: ${itemMonth}, MonthMatch: ${monthMatch}`);
         }
-        
+
         return yearMatch && monthMatch;
       });
     }

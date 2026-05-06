@@ -1,8 +1,9 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import prisma from '../config/prisma';
+// ลบการ import prisma แบบ global ออก
 import Joi from 'joi';
+
 
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_key_change_me_in_prod';
 
@@ -22,7 +23,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
     const { username, password } = value;
 
-    const user = await prisma.user.findUnique({
+    const user = await req.db.user.findUnique({
       where: { username },
     });
 
@@ -44,7 +45,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     }
 
     // Update last login
-    await prisma.user.update({
+    await req.db.user.update({
       where: { id: user.id },
       data: { lastLoginAt: new Date() },
     });
@@ -56,9 +57,11 @@ export const login = async (req: Request, res: Response): Promise<void> => {
         username: user.username,
         role: user.role,
         fullName: user.fullName,
+        companyId: user.companyId, // <--- เพิ่มตรงนี้
       },
       JWT_SECRET,
-      { expiresIn: '1d' } // Token expires in 1 day
+      { expiresIn: '1d' }
+
     );
 
     res.json({
@@ -69,7 +72,9 @@ export const login = async (req: Request, res: Response): Promise<void> => {
         username: user.username,
         fullName: user.fullName,
         role: user.role,
+        companyId: user.companyId, // <--- เพิ่มตรงนี้
       },
+
     });
   } catch (error) {
     console.error('Login error:', error);
@@ -86,7 +91,7 @@ export const getMe = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const user = await prisma.user.findUnique({
+    const user = await req.db.user.findUnique({
       where: { id: userId },
       select: {
         id: true,

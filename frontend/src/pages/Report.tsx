@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import api from '../api/axios';
-import { Download, FileText, BarChart3, TrendingUp, TrendingDown, Wallet, Calendar } from 'lucide-react';
+import { Download, FileText, BarChart3, TrendingUp, TrendingDown, Wallet, Calendar, ArrowRightLeft, CreditCard } from 'lucide-react';
 
 const Report = () => {
   const [data, setData] = useState<any>(null);
@@ -9,6 +9,13 @@ const Report = () => {
   const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
   const [loading, setLoading] = useState(true);
+  
+  // Pagination states
+  const [salesPage, setSalesPage] = useState(1);
+  const [ticketsPage, setTicketsPage] = useState(1);
+  const [expensesPage, setExpensesPage] = useState(1);
+  const [transfersPage, setTransfersPage] = useState(1);
+  const itemsPerPage = 15;
 
   const months = [
     { value: 1, label: 'มกราคม' },
@@ -41,6 +48,9 @@ const Report = () => {
 
   useEffect(() => {
     fetchReport();
+    setSalesPage(1);
+    setTicketsPage(1);
+    setExpensesPage(1);
   }, [selectedBranchId, selectedMonth, selectedYear]);
 
   const fetchReport = async () => {
@@ -143,6 +153,26 @@ const Report = () => {
   const totalOtherExpenseAmount = data?.summary?.totalOtherExpenseAmount || 0;
   const profit = totalSaleAmount - totalAmount - totalOtherExpenseAmount;
 
+  // Sales Pagination
+  const sales = data?.transactions?.sales || [];
+  const salesTotalPages = Math.ceil(sales.length / itemsPerPage);
+  const currentSales = sales.slice((salesPage - 1) * itemsPerPage, salesPage * itemsPerPage);
+
+  // Tickets Pagination
+  const tickets = data?.transactions?.tickets || [];
+  const ticketsTotalPages = Math.ceil(tickets.length / itemsPerPage);
+  const currentTickets = tickets.slice((ticketsPage - 1) * itemsPerPage, ticketsPage * itemsPerPage);
+
+  // Expenses Pagination
+  const expenses = data?.transactions?.expenses || [];
+  const expensesTotalPages = Math.ceil(expenses.length / itemsPerPage);
+  const currentExpenses = expenses.slice((expensesPage - 1) * itemsPerPage, expensesPage * itemsPerPage);
+
+  // Transfers Pagination
+  const transfers = data?.transactions?.transfers || [];
+  const transfersTotalPages = Math.ceil(transfers.length / itemsPerPage);
+  const currentTransfers = transfers.slice((transfersPage - 1) * itemsPerPage, transfersPage * itemsPerPage);
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -214,7 +244,7 @@ const Report = () => {
       ) : (
         <>
           {/* Main Financial Summary Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
             <div className="stat-card p-6 border-l-4 border-brand-green">
               <div className="flex justify-between items-start mb-4">
                 <div className="p-2 bg-brand-green/10 rounded-xl">
@@ -248,6 +278,17 @@ const Report = () => {
               <div className="text-[10px] text-amber-500 mt-1">บาท</div>
             </div>
 
+            <div className="stat-card p-6 border-l-4 border-brand-amber">
+              <div className="flex justify-between items-start mb-4">
+                <div className="p-2 bg-brand-amber/10 rounded-xl">
+                  <ArrowRightLeft size={20} className="text-brand-amber" />
+                </div>
+              </div>
+              <div className="text-[10px] font-bold text-neutral-500 uppercase mb-1">โอนย้ายภายใน</div>
+              <div className="text-white font-black text-2xl">{(data?.summary?.totalTransferVolume || 0).toLocaleString()}</div>
+              <div className="text-[10px] text-brand-amber mt-1">กิโลกรัม</div>
+            </div>
+
             <div className={`stat-card p-6 border-l-4 ${profit >= 0 ? 'border-brand-light' : 'border-red-600 animate-pulse'}`}>
               <div className="flex justify-between items-start mb-4">
                 <div className={`p-2 rounded-xl ${profit >= 0 ? 'bg-brand-light/10' : 'bg-red-500/10'}`}>
@@ -275,10 +316,10 @@ const Report = () => {
             </button>
           </div>
 
-          {/* Details Table - 3 Column View */}
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-            {/* 1. รายรับจากการขาย */}
-            <div className="table-wrap">
+          {/* Details Table - 3 Column View with refined weighted layout (3:3:2) */}
+          <div className="grid grid-cols-1 xl:grid-cols-8 gap-6">
+            {/* 1. รายรับจากการขาย - 37.5% width (col-span-3) */}
+            <div className="table-wrap xl:col-span-3">
               <div className="p-4 border-b border-neutral-800 bg-brand-green/5 font-bold text-sm text-brand-green flex items-center gap-2">
                 <TrendingUp size={14} /> รายละเอียดการขาย (รายรับ)
               </div>
@@ -286,30 +327,54 @@ const Report = () => {
                 <table className="text-[11px]">
                   <thead className="sticky top-0 bg-neutral-900 z-10">
                     <tr>
-                      <th>วันที่</th>
-                      <th>ลูกค้า</th>
-                      <th className="text-right">จำนวนเงิน (฿)</th>
+                      <th className="px-3 py-2 text-left">วันที่</th>
+                      <th className="px-3 py-2 text-left">ลูกค้า</th>
+                      <th className="px-3 py-2 text-right">จำนวน (กก.)</th>
+                      <th className="px-3 py-2 text-right">จำนวนเงิน (฿)</th>
                     </tr>
                   </thead>
-                  <tbody>
-                    {(data.transactions?.sales || []).length > 0 ? (
-                      data.transactions.sales.map((s: any) => (
+                  <tbody className="divide-y divide-white/5">
+                    {currentSales.length > 0 ? (
+                      currentSales.map((s: any) => (
                         <tr key={s.id}>
-                          <td>{new Date(s.saleDate).toLocaleDateString('th-TH')}</td>
-                          <td className="font-bold text-white">{s.customerName}</td>
-                          <td className="text-right text-brand-light font-black">{Number(s.totalAmount).toLocaleString()}</td>
+                          <td className="px-3 py-2">{new Date(s.saleDate).toLocaleDateString('th-TH')}</td>
+                          <td className="px-3 py-2 font-bold text-white">{s.customerName}</td>
+                          <td className="px-3 py-2 text-right text-neutral-400 font-mono">{Number(s.quantityKg).toLocaleString()}</td>
+                          <td className="px-3 py-2 text-right text-brand-light font-black">{Number(s.totalAmount).toLocaleString()}</td>
                         </tr>
                       ))
                     ) : (
-                      <tr><td colSpan={3} className="text-center py-4 text-neutral-500">ไม่มีข้อมูลการขาย</td></tr>
+                      <tr><td colSpan={4} className="text-center py-4 text-neutral-500">ไม่มีข้อมูลการขาย</td></tr>
                     )}
                   </tbody>
                 </table>
               </div>
+              {salesTotalPages > 1 && (
+                <div className="p-3 bg-black/20 border-t border-white/5 flex items-center justify-between gap-2">
+                  <div className="text-[10px] text-neutral-500">{sales.length} รายการ</div>
+                  <div className="flex gap-1">
+                    <button 
+                      onClick={() => setSalesPage(p => Math.max(1, p - 1))}
+                      disabled={salesPage === 1}
+                      className="px-2 py-1 bg-neutral-900 border border-white/10 rounded text-[10px] text-white disabled:opacity-30 hover:bg-neutral-800"
+                    >
+                      ก่อน
+                    </button>
+                    <span className="text-[10px] text-neutral-400 flex items-center px-1">{salesPage}/{salesTotalPages}</span>
+                    <button 
+                      onClick={() => setSalesPage(p => Math.min(salesTotalPages, p + 1))}
+                      disabled={salesPage === salesTotalPages}
+                      className="px-2 py-1 bg-neutral-900 border border-white/10 rounded text-[10px] text-white disabled:opacity-30 hover:bg-neutral-800"
+                    >
+                      ถัดไป
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* 2. รายจ่ายจากการรับซื้อ (เพิ่มใหม่) */}
-            <div className="table-wrap">
+            {/* 2. รายจ่ายจากการรับซื้อ - 37.5% width (col-span-3) */}
+            <div className="table-wrap xl:col-span-3">
               <div className="p-4 border-b border-neutral-800 bg-red-500/5 font-bold text-sm text-red-500 flex items-center gap-2">
                 <TrendingDown size={14} /> รายละเอียดการรับซื้อปาล์ม
               </div>
@@ -317,33 +382,57 @@ const Report = () => {
                 <table className="text-[11px]">
                   <thead className="sticky top-0 bg-neutral-900 z-10">
                     <tr>
-                      <th>วันที่/ใบชั่ง</th>
-                      <th>เกษตรกร</th>
-                      <th className="text-right">จำนวนเงิน (฿)</th>
+                      <th className="px-3 py-2 text-left">วันที่/ใบชั่ง</th>
+                      <th className="px-3 py-2 text-left">เกษตรกร</th>
+                      <th className="px-3 py-2 text-right">จำนวน (กก.)</th>
+                      <th className="px-3 py-2 text-right">จำนวนเงิน (฿)</th>
                     </tr>
                   </thead>
-                  <tbody>
-                    {(data.transactions?.tickets || []).length > 0 ? (
-                      data.transactions.tickets.map((t: any) => (
+                  <tbody className="divide-y divide-white/5">
+                    {currentTickets.length > 0 ? (
+                      currentTickets.map((t: any) => (
                         <tr key={t.id}>
-                          <td>
+                          <td className="px-3 py-2">
                             <div className="text-white font-medium">{t.ticketNo}</div>
                             <div className="text-[9px] text-neutral-500">{new Date(t.weighInAt).toLocaleDateString('th-TH')}</div>
                           </td>
-                          <td className="text-neutral-300">{t.farmer?.fullName}</td>
-                          <td className="text-right text-red-400 font-black">{Number(t.totalAmount).toLocaleString()}</td>
+                          <td className="px-3 py-2 text-neutral-300">{t.farmer?.fullName}</td>
+                          <td className="px-3 py-2 text-right text-neutral-400 font-mono">{Number(t.finalWeightKg || t.netWeightKg).toLocaleString()}</td>
+                          <td className="px-3 py-2 text-right text-red-400 font-black">{Number(t.totalAmount).toLocaleString()}</td>
                         </tr>
                       ))
                     ) : (
-                      <tr><td colSpan={3} className="text-center py-4 text-neutral-500">ไม่มีข้อมูลการรับซื้อ</td></tr>
+                      <tr><td colSpan={4} className="text-center py-4 text-neutral-500">ไม่มีข้อมูลการรับซื้อ</td></tr>
                     )}
                   </tbody>
                 </table>
               </div>
+              {ticketsTotalPages > 1 && (
+                <div className="p-3 bg-black/20 border-t border-white/5 flex items-center justify-between gap-2">
+                  <div className="text-[10px] text-neutral-500">{tickets.length} รายการ</div>
+                  <div className="flex gap-1">
+                    <button 
+                      onClick={() => setTicketsPage(p => Math.max(1, p - 1))}
+                      disabled={ticketsPage === 1}
+                      className="px-2 py-1 bg-neutral-900 border border-white/10 rounded text-[10px] text-white disabled:opacity-30 hover:bg-neutral-800"
+                    >
+                      ก่อน
+                    </button>
+                    <span className="text-[10px] text-neutral-400 flex items-center px-1">{ticketsPage}/{ticketsTotalPages}</span>
+                    <button 
+                      onClick={() => setTicketsPage(p => Math.min(ticketsTotalPages, p + 1))}
+                      disabled={ticketsPage === ticketsTotalPages}
+                      className="px-2 py-1 bg-neutral-900 border border-white/10 rounded text-[10px] text-white disabled:opacity-30 hover:bg-neutral-800"
+                    >
+                      ถัดไป
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* 3. รายจ่ายอื่นๆ */}
-            <div className="table-wrap">
+            {/* 3. รายจ่ายอื่นๆ - 25% width (col-span-2) */}
+            <div className="table-wrap xl:col-span-2">
               <div className="p-4 border-b border-neutral-800 bg-amber-500/5 font-bold text-sm text-amber-500 flex items-center gap-2">
                 <Wallet size={14} /> รายละเอียดรายจ่ายอื่นๆ
               </div>
@@ -351,18 +440,18 @@ const Report = () => {
                 <table className="text-[11px]">
                   <thead className="sticky top-0 bg-neutral-900 z-10">
                     <tr>
-                      <th>วันที่</th>
-                      <th>รายการ</th>
-                      <th className="text-right">จำนวนเงิน (฿)</th>
+                      <th className="px-3 py-2 text-left">วันที่</th>
+                      <th className="px-3 py-2 text-left">รายการ</th>
+                      <th className="px-3 py-2 text-right">จำนวนเงิน (฿)</th>
                     </tr>
                   </thead>
-                  <tbody>
-                    {(data.transactions?.expenses || []).length > 0 ? (
-                      data.transactions.expenses.map((e: any) => (
+                  <tbody className="divide-y divide-white/5">
+                    {currentExpenses.length > 0 ? (
+                      currentExpenses.map((e: any) => (
                         <tr key={e.id}>
-                          <td>{new Date(e.expenseDate).toLocaleDateString('th-TH')}</td>
-                          <td className="font-bold text-white">{e.description}</td>
-                          <td className="text-right text-amber-500 font-black">{Number(e.amount).toLocaleString()}</td>
+                          <td className="px-3 py-2">{new Date(e.expenseDate).toLocaleDateString('th-TH')}</td>
+                          <td className="px-3 py-2 font-bold text-white">{e.description}</td>
+                          <td className="px-3 py-2 text-right text-amber-500 font-black">{Number(e.amount).toLocaleString()}</td>
                         </tr>
                       ))
                     ) : (
@@ -371,6 +460,71 @@ const Report = () => {
                   </tbody>
                 </table>
               </div>
+              {expensesTotalPages > 1 && (
+                <div className="p-3 bg-black/20 border-t border-white/5 flex items-center justify-between gap-2">
+                  <div className="text-[10px] text-neutral-500">{expenses.length} รายการ</div>
+                  <div className="flex gap-1">
+                    <button 
+                      onClick={() => setExpensesPage(p => Math.max(1, p - 1))}
+                      disabled={expensesPage === 1}
+                      className="px-2 py-1 bg-neutral-900 border border-white/10 rounded text-[10px] text-white disabled:opacity-30 hover:bg-neutral-800"
+                    >
+                      ก่อน
+                    </button>
+                    <span className="text-[10px] text-neutral-400 flex items-center px-1">{expensesPage}/{expensesTotalPages}</span>
+                    <button 
+                      onClick={() => setExpensesPage(p => Math.min(expensesTotalPages, p + 1))}
+                      disabled={expensesPage === expensesTotalPages}
+                      className="px-2 py-1 bg-neutral-900 border border-white/10 rounded text-[10px] text-white disabled:opacity-30 hover:bg-neutral-800"
+                    >
+                      ถัดไป
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+          {/* Internal Transfers Table */}
+          <div className="mt-8 space-y-4">
+            <h3 className="text-[15px] font-bold text-white uppercase tracking-wider pl-1">รายการโอนย้ายสต็อกภายใน</h3>
+            <div className="bg-[#1a1a1a] border border-white/5 rounded-2xl overflow-hidden shadow-2xl">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                  <thead>
+                    <tr className="bg-black/40 border-b border-white/5">
+                      <th className="px-6 py-4 text-[10px] font-black text-neutral-500 uppercase tracking-widest">เลขที่รายการ</th>
+                      <th className="px-6 py-4 text-[10px] font-black text-neutral-500 uppercase tracking-widest">วันที่</th>
+                      <th className="px-6 py-4 text-[10px] font-black text-neutral-500 uppercase tracking-widest">ต้นทาง</th>
+                      <th className="px-6 py-4 text-[10px] font-black text-neutral-500 uppercase tracking-widest">ปลายทาง</th>
+                      <th className="px-6 py-4 text-[10px] font-black text-neutral-500 uppercase tracking-widest text-center">เกรด</th>
+                      <th className="px-6 py-4 text-[10px] font-black text-neutral-500 uppercase tracking-widest text-right">จำนวน (กก.)</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {currentTransfers.length > 0 ? currentTransfers.map((s: any) => (
+                      <tr key={s.id} className="hover:bg-white/[0.02] transition-colors">
+                        <td className="px-6 py-4 font-mono text-xs text-white">{s.saleNo}</td>
+                        <td className="px-6 py-4 text-neutral-400 text-xs">{new Date(s.saleDate).toLocaleDateString('th-TH')}</td>
+                        <td className="px-6 py-4 text-neutral-300 text-sm">{s.branch?.branchName}</td>
+                        <td className="px-6 py-4 text-brand-amber font-bold text-sm">{s.toBranch?.branchName}</td>
+                        <td className="px-6 py-4 text-center"><span className="badge badge-gray">{s.grade}</span></td>
+                        <td className="px-6 py-4 text-right font-mono text-white">{Number(s.quantityKg).toLocaleString()}</td>
+                      </tr>
+                    )) : (
+                      <tr><td colSpan={6} className="text-center py-12 text-neutral-500">ไม่พบรายการโอนย้าย</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+              {transfersTotalPages > 1 && (
+                <div className="px-6 py-4 bg-black/20 border-t border-white/5 flex items-center justify-between">
+                  <div className="text-xs text-neutral-500">หน้าที่ {transfersPage} จาก {transfersTotalPages}</div>
+                  <div className="flex gap-2">
+                    <button onClick={() => setTransfersPage(p => Math.max(1, p - 1))} disabled={transfersPage === 1} className="px-3 py-1 bg-neutral-900 border border-white/10 rounded text-xs text-white disabled:opacity-30">ก่อนหน้า</button>
+                    <button onClick={() => setTransfersPage(p => Math.min(transfersTotalPages, p + 1))} disabled={transfersPage === transfersTotalPages} className="px-3 py-1 bg-neutral-900 border border-white/10 rounded text-xs text-white disabled:opacity-30">ถัดไป</button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </>

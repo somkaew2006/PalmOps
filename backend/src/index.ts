@@ -1,4 +1,4 @@
-import express from 'express';
+import express from 'express'; // reload
 import cors from 'cors';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
@@ -16,8 +16,10 @@ import productRoutes from './routes/productRoutes';
 import customerRoutes from './routes/customerRoutes';
 import { getDashboardStats } from './controllers/statsController';
 import { getReportData } from './controllers/reportController';
-import { getBranchStockHistory } from './controllers/branchController';
+import userRoutes from './routes/userRoutes';
+import adminRoutes from './routes/adminRoutes';
 import { protect } from './middlewares/authMiddleware';
+import { tenantMiddleware } from './middlewares/tenantMiddleware';
 
 dotenv.config();
 
@@ -31,9 +33,13 @@ app.use(morgan('dev'));
 
 // Debug middleware
 app.use((req, res, next) => {
-  console.log(`${req.method} ${req.url}`);
+  console.log(`${req.method} ${req.url} - Host: ${req.hostname}`);
   next();
 });
+
+// 🏢 Multi-tenant Middleware (ต้องอยู่ก่อน Routes)
+app.use(tenantMiddleware);
+
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -46,6 +52,8 @@ app.use('/api/branches', branchRoutes);
 app.use('/api/sales', saleRoutes);
 app.use('/api/expenses', expenseRoutes);
 app.use('/api/customers', customerRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/admin', adminRoutes);
 
 /**
  * @swagger
@@ -70,6 +78,11 @@ app.use('/api/reports', protect, getReportData);
 // Health check endpoint
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'PalmOps API is running' });
+});
+
+app.get('/api/test-log', (req, res) => {
+  require('fs').appendFileSync('D:\\A\\Application\\PalmOps\\backend\\request_debug.log', '--- TEST LOG AT ' + new Date().toISOString() + ' ---\n');
+  res.json({ message: 'Log written' });
 });
 
 // Swagger API Documentation

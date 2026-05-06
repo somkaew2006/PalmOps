@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
-import prisma from '../config/prisma';
+// ลบการ import prisma แบบ global ออก
+
 
 export const getDashboardStats = async (req: Request, res: Response) => {
   try {
@@ -26,13 +27,13 @@ export const getDashboardStats = async (req: Request, res: Response) => {
     if (branchId) latestWhereClause.branchId = branchId;
 
     const [ticketsToday, salesToday, todayPrice, latestTickets] = await Promise.all([
-      prisma.weighTicket.findMany({ where: whereClause }),
-      prisma.sale.findMany({ where: saleWhereClause }),
-      prisma.dailyPrice.findFirst({
+      req.db.weighTicket.findMany({ where: whereClause }),
+      req.db.sale.findMany({ where: saleWhereClause }),
+      req.db.dailyPrice.findFirst({
         where: branchId ? { branchId } : undefined,
         orderBy: { priceDate: 'desc' }
       }),
-      prisma.weighTicket.findMany({
+      req.db.weighTicket.findMany({
         where: latestWhereClause,
         take: 8,
         include: {

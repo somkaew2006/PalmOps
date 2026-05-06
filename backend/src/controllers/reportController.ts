@@ -1,9 +1,11 @@
 import { Request, Response } from 'express';
-import prisma from '../config/prisma';
+// ลบการ import prisma แบบ global ออก
+
 
 export const getReportData = async (req: Request, res: Response) => {
   try {
     const { month, year, branchId } = req.query;
+    console.log(`[ReportController] Request received - Month: ${month}, Year: ${year}, Branch: ${branchId}`);
     const now = new Date();
     const targetMonth = month ? parseInt(month as string) - 1 : now.getMonth();
     const targetYear = year ? parseInt(year as string) : now.getFullYear();
@@ -15,70 +17,83 @@ export const getReportData = async (req: Request, res: Response) => {
       weighInAt: { gte: startDate, lte: endDate },
       status: { in: ['confirmed', 'paid'] }
     };
-    if (branchId) whereClause.branchId = parseInt(branchId as string);
+    if (branchId && branchId !== 'all' && branchId !== '') {
+      whereClause.branchId = parseInt(branchId as string);
+    }
 
     const expenseWhereClause: any = {
       expenseDate: { gte: startDate, lte: endDate }
     };
-    if (branchId) expenseWhereClause.branchId = parseInt(branchId as string);
+    if (branchId && branchId !== 'all' && branchId !== '') {
+      expenseWhereClause.branchId = parseInt(branchId as string);
+    }
     
     const saleWhereClause: any = {
       saleDate: { gte: startDate, lte: endDate },
-      status: 'completed'
+      status: 'completed',
+      toBranchId: null 
     };
-    if (branchId) saleWhereClause.branchId = parseInt(branchId as string);
+    if (branchId && branchId !== 'all' && branchId !== '') {
+      saleWhereClause.branchId = parseInt(branchId as string);
+    }
+
+    // Transfers query
+    const transferWhereClause: any = {
+      saleDate: { gte: startDate, lte: endDate },
+      status: 'completed',
+      toBranchId: { not: null }
+    };
+    if (branchId && branchId !== 'all' && branchId !== '') {
+      transferWhereClause.branchId = parseInt(branchId as string);
+    }
 
     // 1. Monthly Summary
-    const [tickets, farmersCount, sales, expenses] = await Promise.all([
-      prisma.weighTicket.findMany({
-        where: whereClause
-      }),
-      prisma.farmer.count(),
-      prisma.sale.findMany({
-        where: saleWhereClause
-      }),
-      prisma.expense.findMany({
-        where: expenseWhereClause
-      })
+    const [tickets, farmersCount, sales, transfers, expenses] = await Promise.all([
+      req.db.weighTicket.findMany({ where: whereClause }),
+      req.db.farmer.count(),
+      req.db.sale.findMany({ where: saleWhereClause }),
+      req.db.sale.findMany({ where: transferWhereClause }),
+      req.db.expense.findMany({ where: expenseWhereClause })
     ]);
 
-    const totalVolume = tickets.reduce((sum, t) => sum + parseFloat(t.finalWeightKg?.toString() || '0'), 0);
-    const totalAmount = tickets.reduce((sum, t) => sum + parseFloat(t.totalAmount?.toString() || '0'), 0);
+    const totalVolume = tickets.reduce((sum, t) => sum + Number(t.finalWeightKg || 0), 0);
+    const totalAmount = tickets.reduce((sum, t) => sum + Number(t.totalAmount || 0), 0);
     const ticketCount = tickets.length;
 
-    const totalSaleVolume = sales.reduce((sum, s) => sum + parseFloat(s.quantityKg.toString()), 0);
-    const totalSaleAmount = sales.reduce((sum, s) => sum + parseFloat(s.totalAmount?.toString() || '0'), 0);
+    const totalSaleVolume = sales.reduce((sum, s) => sum + Number(s.quantityKg || 0), 0);
+    const totalSaleAmount = sales.reduce((sum, s) => sum + Number(s.totalAmount || 0), 0);
+    const totalTransferVolume = transfers.reduce((sum, s) => sum + Number(s.quantityKg || 0), 0);
 
-    const totalOtherExpenseAmount = expenses.reduce((sum, e) => sum + parseFloat(e.amount.toString()), 0);
+    const totalOtherExpenseAmount = expenses.reduce((sum, e) => sum + Number(e.amount || 0), 0);
 
     // 2. Daily Volume (for the requested month)
     const dailyVolume: { [key: string]: number } = {};
     tickets.forEach(t => {
       const dateKey = new Date(t.weighInAt).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
-      dailyVolume[dateKey] = (dailyVolume[dateKey] || 0) + parseFloat(t.finalWeightKg?.toString() || '0');
+      dailyVolume[dateKey] = (dailyVolume[dateKey] || 0) + Number(t.finalWeightKg || 0);
     });
 
     const dailySaleVolume: { [key: string]: number } = {};
     sales.forEach(s => {
       const dateKey = new Date(s.saleDate).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
-      dailySaleVolume[dateKey] = (dailySaleVolume[dateKey] || 0) + parseFloat(s.quantityKg.toString());
+      dailySaleVolume[dateKey] = (dailySaleVolume[dateKey] || 0) + Number(s.quantityKg || 0);
     });
 
     const dailyVolumeChart = Object.entries(dailyVolume).map(([date, volume]) => ({
       date,
       volume: volume / 1000 // Convert to tons
-    })).sort((a, b) => 1);
+    })).sort((a, b) => a.date.localeCompare(b.date));
 
     const dailySaleVolumeChart = Object.entries(dailySaleVolume).map(([date, volume]) => ({
       date,
       volume: volume / 1000 // Convert to tons
-    })).sort((a, b) => 1);
+    })).sort((a, b) => a.date.localeCompare(b.date));
 
     // 3. Grade Distribution
     const grades: { [key: string]: number } = { 'A': 0, 'B': 0, 'C': 0 };
     tickets.forEach(t => {
-      if (t.grade && grades[t.grade] !== undefined) {
-        grades[t.grade]++;
+      if (t.grade && grades[t.grade as string] !== undefined) {
+        grades[t.grade as string]++;
       }
     });
 
@@ -91,19 +106,21 @@ export const getReportData = async (req: Request, res: Response) => {
 
     res.json({
       summary: {
-        totalVolume: totalVolume,
-        totalAmount: totalAmount,
+        totalVolume,
+        totalAmount,
         ticketCount,
         farmersCount,
-        totalSaleVolume: totalSaleVolume,
-        totalSaleAmount: totalSaleAmount,
-        totalOtherExpenseAmount: totalOtherExpenseAmount
+        totalSaleVolume,
+        totalSaleAmount,
+        totalTransferVolume,
+        totalOtherExpenseAmount,
+        netProfit: totalSaleAmount - totalAmount - totalOtherExpenseAmount
       },
       dailyVolume: dailyVolumeChart.slice(-7),
       dailySaleVolume: dailySaleVolumeChart.slice(-7),
       gradeDistribution,
       transactions: {
-        tickets: await prisma.weighTicket.findMany({
+        tickets: await req.db.weighTicket.findMany({
           where: whereClause,
           include: { 
             farmer: { select: { fullName: true } },
@@ -111,14 +128,23 @@ export const getReportData = async (req: Request, res: Response) => {
           },
           orderBy: { weighInAt: 'desc' }
         }),
-        sales: await prisma.sale.findMany({
+        sales: await req.db.sale.findMany({
           where: saleWhereClause,
-          include: {
-            branch: { select: { branchName: true } }
+          include: { 
+            branch: { select: { branchName: true } },
+            customer: { select: { name: true } }
           },
           orderBy: { saleDate: 'desc' }
         }),
-        expenses: await prisma.expense.findMany({
+        transfers: await req.db.sale.findMany({
+          where: transferWhereClause,
+          include: { 
+            branch: { select: { branchName: true } },
+            toBranch: { select: { branchName: true } }
+          },
+          orderBy: { saleDate: 'desc' }
+        }),
+        expenses: await req.db.expense.findMany({
           where: expenseWhereClause,
           include: {
             branch: { select: { branchName: true } },
